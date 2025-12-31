@@ -5,7 +5,6 @@ using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline;
 using UnityEngine;
 using YY;
-using static UnityEngine.GraphicsBuffer;
 public class MenuToolsUtils
 {
     const string kSimulationMode = "GameTools/AssetBundles/Simulation Mode";

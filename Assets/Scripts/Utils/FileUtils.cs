@@ -35,12 +35,11 @@ public static class FileUtils
         NativePath = string.Format("{0}/", Application.dataPath.Replace("/Assets", "/StreamingRes/") + GetLoadUrl());
 #else
 #if UNITY_STANDALONE_WIN
-        PersistentPath = Application.streamingAssetsPath.Replace("/StreamingAssets", "/Res/");
+        PersistentPath = Application.streamingAssetsPath.Replace("/StreamingAssets", "/PersistentRes/");
 #elif UNITY_ANDROID
         PersistentPath = string.Format("{0}{1}", Application.persistentDataPath, "/assets/");
 #else
         PersistentPath = string.Format("{0}{1}", Application.persistentDataPath, "/assets/");
-        NativePath = string.Format("file://{0}/", Application.streamingAssetsPath+ "/assets");
 #endif
         
 #endif

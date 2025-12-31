@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
+using System;
+
 
 
 #if UNITY_EDITOR
@@ -14,9 +16,7 @@ namespace YY
 {
     public static class BundleManager
     {
-        public delegate string OverrideBaseDownloadingURLDelegate(string bundleName);
-
-        public static OverrideBaseDownloadingURLDelegate overrideBaseDownloadingURL;
+        private static IBundlePathProvider _pathProvider;
         private static AssetBundleManifest _manifest;
         private static Dictionary<string, BundleInfo> _loadedBundles = new Dictionary<string, BundleInfo>();
 
@@ -49,19 +49,10 @@ namespace YY
             }
         }
 #endif
-        public static string GetAssetBundleBaseDownloadingURL(string bundleName)
-        {
-            if (overrideBaseDownloadingURL != null)
-            {
-                string res = overrideBaseDownloadingURL.Invoke(bundleName);
-                if (res != null)
-                    return res;
-            }
-            return _basePath;
-        }
 
-        public static async Task InitializeAsync(string manifestName)
+        public static async Task InitializeAsync(string manifestName, IBundlePathProvider provider = null)
         {
+            _pathProvider = provider ?? new DefaultBundlePathProvider();
             _strategy = new LocalFileLoadStrategy(); 
             _scheduler = new RequestScheduler(max: 10);
 
@@ -73,7 +64,7 @@ namespace YY
             }
 #endif
 
-            var req = await AssetBundle.LoadFromFileAsync(GetAssetBundleBaseDownloadingURL(manifestName) + manifestName);
+            var req = await AssetBundle.LoadFromFileAsync(_pathProvider.GetBundlePath(manifestName));
             if (req != null)
             {
                 _manifest = req.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
@@ -168,14 +159,32 @@ namespace YY
                 if (_loadedBundles.TryGetValue(bundleName, out var info))
                     return info;
 
-                string path = Path.Combine(GetAssetBundleBaseDownloadingURL(bundleName), bundleName);
-                AssetBundle bundle = await _strategy.Load(path);
+                string path = Path.Combine(_pathProvider.GetBundlePath(bundleName));
 
-                if (bundle == null) return null;
+                //文件存在性检查
+                if (!SimulateInEditor && !_pathProvider.Exists(path))
+                {
+                    throw new BundleLoadException(bundleName, $"File not found at path: {path}");
+                }
+
+                AssetBundle bundle = await _strategy.Load(path);
+        
+                if (bundle == null)
+                {
+                    throw new BundleLoadException(bundleName, "AssetBundle.LoadFromFileAsync returned null. File might be corrupted.");
+                }
 
                 var newInfo = new BundleInfo(bundleName, bundle);
                 _loadedBundles[bundleName] = newInfo;
                 return newInfo;
+            }
+            catch (Exception ex)
+            {
+                // 捕获所有异常（包括依赖加载抛出的），包装一下再抛出，方便调试
+                // 避免这里吞掉异常，导致上层一直 await，或者不知道发生了什么
+                if (ex is BundleLoadException) throw; // 如果已经是封装好的，直接抛
+
+                throw new BundleLoadException(bundleName, "Unknown error during loading.", ex);
             }
             finally
             {
