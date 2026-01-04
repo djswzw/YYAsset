@@ -48,6 +48,12 @@ namespace YY
                 }
             }
         }
+
+        // 仅在编辑器下有效，返回当前已加载 Bundle 的列表快照
+        public static List<BundleInfo> GetLoadedBundleInfos()
+        {
+            return new List<BundleInfo>(_loadedBundles.Values);
+        }
 #endif
 
         public static async Task InitializeAsync(string manifestName, IBundlePathProvider provider = null)
@@ -162,7 +168,7 @@ namespace YY
                 string path = Path.Combine(_pathProvider.GetBundlePath(bundleName));
 
                 //文件存在性检查
-                if (!SimulateInEditor && !_pathProvider.Exists(path))
+                if (!_pathProvider.Exists(path))
                 {
                     throw new BundleLoadException(bundleName, $"File not found at path: {path}");
                 }
