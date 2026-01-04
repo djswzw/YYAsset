@@ -48,13 +48,8 @@ namespace YY
                 }
             }
         }
-
-        // 仅在编辑器下有效，返回当前已加载 Bundle 的列表快照
-        public static List<BundleInfo> GetLoadedBundleInfos()
-        {
-            return new List<BundleInfo>(_loadedBundles.Values);
-        }
 #endif
+        public static AssetBundleManifest GetManifest() => _manifest;
 
         public static async Task InitializeAsync(string manifestName, IBundlePathProvider provider = null)
         {
@@ -263,6 +258,34 @@ namespace YY
             _loadedBundles.Clear();
             AssetBundle.UnloadAllAssetBundles(true);
             _inflightTasks.Clear();
+        }
+
+        public static List<BundleInfo> GetLoadedBundleInfos()
+        {
+            return new List<BundleInfo>(_loadedBundles.Values);
+        }
+
+        public static List<string> GetLoadedBundlesThatDependOn(string targetBundleName)
+        {
+            var result = new List<string>();
+            if (_manifest == null) return result;
+
+            foreach (var kvp in _loadedBundles)
+            {
+                var sourceBundle = kvp.Key;
+                if (sourceBundle == targetBundleName) continue;
+
+                var deps = _manifest.GetAllDependencies(sourceBundle);
+                foreach (var dep in deps)
+                {
+                    if (dep == targetBundleName)
+                    {
+                        result.Add(sourceBundle);
+                        break;
+                    }
+                }
+            }
+            return result;
         }
     }
 }

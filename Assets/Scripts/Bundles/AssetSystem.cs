@@ -121,6 +121,25 @@ namespace YY
             listener.Handle = handle;
         }
 
+#if UNITY_EDITOR
+        public static List<AssetInternalNode> GetLoadedAssetNodes()
+        {
+            return new List<AssetInternalNode>(_nodes.Values);
+        }
+
+        public static List<string> GetLoadedAssetsInBundle(string bundleName)
+        {
+            var result = new List<string>();
+            foreach (var node in _nodes.Values)
+            {
+                if (node.BundleName == bundleName)
+                {
+                    result.Add(node.AssetName);
+                }
+            }
+            return result;
+        }
+#endif
     }
 
     internal class AssetBindingListener : MonoBehaviour

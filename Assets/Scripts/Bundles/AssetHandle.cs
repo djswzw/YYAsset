@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace YY
 {
@@ -33,7 +32,7 @@ namespace YY
         }
     }
 
-    internal class AssetInternalNode
+    public class AssetInternalNode
     {
         public UnityEngine.Object TargetAsset;
         public int RefCount;
