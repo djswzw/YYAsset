@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic; // 必须引用，用于 Dictionary
+﻿using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using YY.Build.Data; // 引用 BuildContext
 
 namespace YY.Build.Graph.Nodes
 {
@@ -17,7 +16,7 @@ namespace YY.Build.Graph.Nodes
             title = "Source: Directory";
 
             // 添加标准输出端口
-            AddOutputPort("Output");
+            AddOutputPort("Output", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);
 
             // --- UI 构建 ---
             var container = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };

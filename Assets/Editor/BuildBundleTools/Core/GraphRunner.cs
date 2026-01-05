@@ -73,7 +73,7 @@ namespace YY.Build.Core
             return new BuildContext();
         }
 
-        // 拓扑排序保持不变... (省略，与上一章相同，请保留原有的 TopologicalSort)
+        // 拓扑排序保持不变
         private static List<BaseBuildNode> TopologicalSort(BaseBuildNode startNode)
         {
             var sorted = new List<BaseBuildNode>();

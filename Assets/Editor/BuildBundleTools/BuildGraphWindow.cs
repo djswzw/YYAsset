@@ -97,6 +97,8 @@ namespace YY.Build.Graph
                 evt.menu.AppendAction("Source/Directory Node", action => CreateNode<DirectoryNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Process/Filter Node", action => CreateNode<FilterNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Strategy/Grouper Node", action => CreateNode<GrouperNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Export/Build Bundle Node", action => CreateNode<BuildBundleNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Export/Apply to Editor", action => CreateNode<ApplyToEditorNode>(action.eventInfo.localMousePosition));
             });
             _graphView.AddManipulator(menu);
         }
@@ -190,23 +192,33 @@ namespace YY.Build.Graph
             // 恢复节点
             foreach (var nodeData in _currentAsset.Nodes)
             {
-                var nodeType = System.Type.GetType(nodeData.NodeType);
-                if (nodeType == null) nodeType = System.AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).FirstOrDefault(t => t.FullName == nodeData.NodeType);
-                if (nodeType == null) continue;
+                try
+                {
+                    var nodeType = System.Type.GetType(nodeData.NodeType);
+                    if (nodeType == null) nodeType = System.AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).FirstOrDefault(t => t.FullName == nodeData.NodeType);
+                    if (nodeType == null) { Debug.LogError($"Missing Node Type: {nodeData.NodeType}"); continue; }
 
-                var node = System.Activator.CreateInstance(nodeType) as BaseBuildNode;
-                node.Initialize();
-                node.GUID = nodeData.NodeGUID;
-                node.title = nodeData.Title;
-                node.SetPosition(new Rect(nodeData.Position, Vector2.zero));
-                node.LoadFromJSON(nodeData.JsonData);
+                    var node = System.Activator.CreateInstance(nodeType) as BaseBuildNode;
+                    node.Initialize();
+                    node.GUID = nodeData.NodeGUID;
+                    node.title = nodeData.Title;
+                    node.SetPosition(new Rect(nodeData.Position, Vector2.zero));
 
-                // 【Undo】8. 恢复节点时，重新绑定数据变更事件
-                node.OnDataChanged = () => SaveGraph("Node Value Change");
+                    // 恢复数据
+                    node.LoadFromJSON(nodeData.JsonData);
 
-                _graphView.AddElement(node);
-                nodeDict.Add(node.GUID, node);
+                    // 绑定事件
+                    node.OnDataChanged = () => SaveGraph("Node Value Change");
+
+                    _graphView.AddElement(node);
+                    nodeDict.Add(node.GUID, node);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Failed to load node {nodeData.Title}: {ex}");
+                }
             }
+
 
             // 恢复连线
             foreach (var edgeData in _currentAsset.Edges)

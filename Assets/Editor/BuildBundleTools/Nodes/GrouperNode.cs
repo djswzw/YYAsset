@@ -21,7 +21,7 @@ namespace YY.Build.Graph.Nodes
         {
             title = "Strategy: Grouper";
             AddInputPort("Input");
-            AddOutputPort("Output");
+            AddOutputPort("Output", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);
 
             _modeField = new EnumField("Mode:", Mode);
             _modeField.RegisterValueChangedCallback(e =>
@@ -77,7 +77,12 @@ namespace YY.Build.Graph.Nodes
                         // 移除 Assets/ 前缀
                         string dir = Path.GetDirectoryName(asset.AssetPath).Replace("\\", "/");
                         if (dir.StartsWith("Assets/")) dir = dir.Substring(7);
-
+                        // 获取最后一级目录
+                        int lastSlashIndex = dir.LastIndexOf('/');
+                        if (lastSlashIndex >= 0)
+                        {
+                            dir = dir.Substring(lastSlashIndex + 1); // 提取最后一级目录
+                        }
                         // 替换斜杠为下划线
                         bundleName = MainKey + dir.Replace("/", "_").ToLower();
                         break;
