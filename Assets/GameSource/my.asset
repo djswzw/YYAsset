@@ -23,30 +23,42 @@ MonoBehaviour:
     Position: {x: 67, y: -16}
     NodeType: YY.Build.Graph.Nodes.FilterNode
     JsonData: '{"rules":[{"IsEnabled":true,"Type":1,"Keyword":"uipanel/","PortName":"Rule
-      1"}]}'
-  - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
-    Title: 'Strategy: Grouper'
-    Position: {x: 310, y: 3}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
+      1"},{"IsEnabled":true,"Type":1,"Keyword":"scenes/","PortName":"Rule 2"},{"IsEnabled":true,"Type":1,"Keyword":"uiatlas/","PortName":"Rule
+      3"}]}'
   - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
     Title: 'Export: Build AssetBundles'
     Position: {x: 701, y: -60}
     NodeType: YY.Build.Graph.Nodes.BuildBundleNode
     JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
+  - NodeGUID: f19baaa8-56ae-498b-bfb1-6944d4285f06
+    Title: 'Strategy: Grouper'
+    Position: {x: 322, y: 305}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"atlas/","suffix":".b"}'
+  - NodeGUID: f8a1d0c6-a462-45ff-8b1a-e0011b61059a
+    Title: 'Process: Dependency'
+    Position: {x: 343, y: -218}
+    NodeType: YY.Build.Graph.Nodes.DependencyNode
+    JsonData: '{"recursive":true,"smartAtlas":true}'
   - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     Title: 'Editor: Set Bundle Names'
-    Position: {x: 501, y: 249}
+    Position: {x: 688, y: 248}
     NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
     JsonData: '{}'
+  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    Title: 'Strategy: Grouper'
+    Position: {x: 322, y: 149}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"scene/","suffix":".b"}'
+  - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
+    Title: 'Strategy: Grouper'
+    Position: {x: 320, y: -29}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output
     TargetNodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
-    TargetPortName: Input
-  - BaseNodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
-    BasePortName: Rule 1
-    TargetNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     TargetPortName: Input
   - BaseNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     BasePortName: Output
@@ -55,4 +67,32 @@ MonoBehaviour:
   - BaseNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     BasePortName: Output
     TargetNodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    TargetPortName: Input
+  - BaseNodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    BasePortName: Output
+    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    TargetPortName: Input
+  - BaseNodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    BasePortName: Output
+    TargetNodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    TargetPortName: Input
+  - BaseNodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
+    BasePortName: Rule 1
+    TargetNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
+    TargetPortName: Input
+  - BaseNodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
+    BasePortName: Rule 1
+    TargetNodeGUID: f8a1d0c6-a462-45ff-8b1a-e0011b61059a
+    TargetPortName: Input
+  - BaseNodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
+    BasePortName: Rule 2
+    TargetNodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    TargetPortName: Input
+  - BaseNodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
+    BasePortName: Rule 3
+    TargetNodeGUID: f19baaa8-56ae-498b-bfb1-6944d4285f06
+    TargetPortName: Input
+  - BaseNodeGUID: f19baaa8-56ae-498b-bfb1-6944d4285f06
+    BasePortName: Output
+    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     TargetPortName: Input

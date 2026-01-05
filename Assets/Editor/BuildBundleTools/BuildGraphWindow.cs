@@ -96,6 +96,7 @@ namespace YY.Build.Graph
             {
                 evt.menu.AppendAction("Source/Directory Node", action => CreateNode<DirectoryNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Process/Filter Node", action => CreateNode<FilterNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Process/Dependency Node", action => CreateNode<DependencyNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Strategy/Grouper Node", action => CreateNode<GrouperNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Build Bundle Node", action => CreateNode<BuildBundleNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Apply to Editor", action => CreateNode<ApplyToEditorNode>(action.eventInfo.localMousePosition));
@@ -255,7 +256,6 @@ namespace YY.Build.Graph
             rootVisualElement.Add(toolbar);
         }
 
-        // --- 预览面板相关 (保持 UI Toolkit 写法) ---
         private void CreatePreviewPanel()
         {
             _previewContainer = new VisualElement();
@@ -264,15 +264,16 @@ namespace YY.Build.Graph
             _previewContainer.style.bottom = 0;
             _previewContainer.style.left = 0;
             _previewContainer.style.right = 0;
-            _previewContainer.style.height = 200;
-            _previewContainer.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.95f);
+            _previewContainer.style.height = 250; //稍微加高一点
+            _previewContainer.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.98f);
             _previewContainer.style.borderTopWidth = 2;
             _previewContainer.style.borderTopColor = new Color(0.3f, 0.3f, 0.3f);
             _previewContainer.visible = false;
 
+            // Header
             var header = new VisualElement();
             header.style.flexDirection = FlexDirection.Row;
-            header.style.height = 25;
+            header.style.height = 28;
             header.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f);
             header.style.paddingLeft = 10;
             header.style.alignItems = Align.Center;
@@ -281,25 +282,114 @@ namespace YY.Build.Graph
             titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             titleLabel.style.flexGrow = 1;
 
+            var copyBtn = new Button(() =>
+            {
+                if (_previewContext != null)
+                {
+                    // 1. 生成文本
+                    string content = GeneratePreviewText(_previewContext);
+
+                    // 2. 【关键修复】使用 GUIUtility 直接写入系统剪贴板
+                    GUIUtility.systemCopyBuffer = content;
+
+                    // 3. 打印日志 (并在 Log 里显示一部分内容确认)
+                    string shortText = content.Length > 50 ? content.Substring(0, 50) + "..." : content;
+                    Debug.Log($"[BuildGraph] Copied to clipboard ({content.Length} chars):\n{shortText}");
+                }
+                else
+                {
+                    Debug.LogWarning("[BuildGraph] Nothing to copy (Context is null)");
+                }
+            })
+            { text = "Copy All" };
+
+            copyBtn.style.marginRight = 10;
+
             var closeBtn = new Button(() => { _previewContainer.visible = false; }) { text = "X" };
             closeBtn.style.width = 25;
+            closeBtn.style.flexShrink = 0; // 防止压缩
 
             header.Add(titleLabel);
+            header.Add(copyBtn); // 加在这里
             header.Add(closeBtn);
 
+            // Scroll View
             _previewScrollView = new ScrollView();
-            _previewScrollView.style.paddingLeft = 10;
-            _previewScrollView.style.paddingTop = 10;
+            _previewScrollView.style.flexGrow = 1; // 填满剩余空间
 
             _previewContainer.Add(header);
             _previewContainer.Add(_previewScrollView);
             rootVisualElement.Add(_previewContainer);
         }
+        private string GeneratePreviewText(BuildContext context)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            // Part 1: Logs
+            if (context.Logs.Length > 0)
+            {
+                sb.AppendLine("=== EXECUTION LOGS ===");
+                sb.AppendLine(context.Logs.ToString());
+                sb.AppendLine();
+            }
+
+            // Part 2: Assets
+            sb.AppendLine($"=== OUTPUT ASSETS ({context.Assets.Count}) ===");
+            if (context.Assets.Count == 0)
+            {
+                sb.AppendLine("(List is empty)");
+            }
+            else
+            {
+                // 按 BundleName 分组显示，更清晰
+                var groups = context.Assets.GroupBy(a => string.IsNullOrEmpty(a.BundleName) ? "[No Bundle]" : a.BundleName);
+
+                foreach (var g in groups)
+                {
+                    sb.AppendLine($"Bundle: {g.Key}");
+                    foreach (var asset in g)
+                    {
+                        sb.AppendLine($"  - {asset.AssetPath}");
+                    }
+                    sb.AppendLine(); // 组间空行
+                }
+            }
+
+            return sb.ToString();
+        }
+        private TextField CreateSelectableLabel(string text, Color color, bool bold = false)
+        {
+            var field = new TextField();
+            field.value = text;
+            field.isReadOnly = true; // 只读
+            field.multiline = true;  // 支持多行 (针对 Log)
+
+            // 样式调整：去掉输入框的边框和背景，让它看起来像 Label
+            field.style.backgroundColor = new Color(0, 0, 0, 0);
+            field.style.borderTopWidth = 0;
+            field.style.borderBottomWidth = 0;
+            field.style.borderLeftWidth = 0;
+            field.style.borderRightWidth = 0;
+
+            // 字体样式
+            field.style.color = color;
+            if (bold) field.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+            // 调整 Margin 使其紧凑
+            field.style.marginTop = 0;
+            field.style.marginBottom = 2;
+            field.style.marginLeft = 2;
+
+            // 允许文本换行
+            field.style.whiteSpace = WhiteSpace.Normal;
+
+            return field;
+        }
 
         private void UpdatePreviewPanel(BuildContext context)
         {
             _previewScrollView.Clear();
-
+            _previewContext = context;
             if (context == null)
             {
                 _previewContainer.visible = false;
@@ -308,23 +398,25 @@ namespace YY.Build.Graph
 
             _previewContainer.visible = true;
 
+            // 1. 显示日志
             if (context.Logs.Length > 0)
             {
-                var logHeader = new Label("Execution Logs:");
-                logHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-                logHeader.style.color = new Color(0.7f, 0.7f, 0.7f);
-                _previewScrollView.Add(logHeader);
+                _previewScrollView.Add(new Label("Execution Logs:")
+                {
+                    style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.7f, 0.7f, 0.7f) }
+                });
 
-                var logContent = new Label(context.Logs.ToString());
-                logContent.style.whiteSpace = WhiteSpace.Normal;
-                logContent.style.marginBottom = 15;
-                _previewScrollView.Add(logContent);
+                // 使用可复制的 TextField 显示日志
+                var logField = CreateSelectableLabel(context.Logs.ToString(), Color.white);
+                logField.style.marginBottom = 15;
+                _previewScrollView.Add(logField);
             }
 
-            var assetHeader = new Label($"Assets Output ({context.Assets.Count}):");
-            assetHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-            assetHeader.style.color = new Color(0.4f, 0.8f, 0.4f);
-            _previewScrollView.Add(assetHeader);
+            // 2. 显示资产
+            _previewScrollView.Add(new Label($"Assets Output ({context.Assets.Count}):")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.4f, 0.8f, 0.4f) }
+            });
 
             if (context.Assets.Count == 0)
             {
@@ -335,9 +427,12 @@ namespace YY.Build.Graph
                 foreach (var asset in context.Assets)
                 {
                     string bundleText = string.IsNullOrEmpty(asset.BundleName) ? "[No Bundle]" : $"[{asset.BundleName}]";
-                    var row = new Label($"{bundleText}  {asset.AssetPath}");
-                    if (!string.IsNullOrEmpty(asset.BundleName)) row.style.color = new Color(0.8f, 0.8f, 1f);
-                    _previewScrollView.Add(row);
+                    string fullText = $"  {bundleText}  {asset.AssetPath}";
+
+                    Color textColor = string.IsNullOrEmpty(asset.BundleName) ? Color.white : new Color(0.8f, 0.8f, 1f);
+
+                    // 使用可复制的 TextField 显示资产行
+                    _previewScrollView.Add(CreateSelectableLabel(fullText, textColor));
                 }
             }
         }
