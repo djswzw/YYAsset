@@ -13,30 +13,30 @@ MonoBehaviour:
   m_Name: my
   m_EditorClassIdentifier: Assembly-CSharp-Editor::YY.Build.Data.BuildGraphAsset
   Nodes:
-  - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
-    Title: 'Export: Build AssetBundles'
-    Position: {x: 802, y: 148}
-    NodeType: YY.Build.Graph.Nodes.BuildBundleNode
-    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","compress":256,"target":19}'
   - NodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     Title: 'Source: Directory'
-    Position: {x: 69, y: 167}
+    Position: {x: -138, y: 3}
     NodeType: YY.Build.Graph.Nodes.DirectoryNode
     JsonData: '{"path":"Assets/GameAssets"}'
   - NodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
     Title: Advanced Filter
-    Position: {x: 283, y: 217}
+    Position: {x: 67, y: -16}
     NodeType: YY.Build.Graph.Nodes.FilterNode
     JsonData: '{"rules":[{"IsEnabled":true,"Type":1,"Keyword":"uipanel/","PortName":"Rule
       1"}]}'
   - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     Title: 'Strategy: Grouper'
-    Position: {x: 546, y: 144}
+    Position: {x: 310, y: 3}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
+  - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    Title: 'Export: Build AssetBundles'
+    Position: {x: 701, y: -60}
+    NodeType: YY.Build.Graph.Nodes.BuildBundleNode
+    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
   - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     Title: 'Editor: Set Bundle Names'
-    Position: {x: 835, y: 367}
+    Position: {x: 501, y: 249}
     NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
     JsonData: '{}'
   Edges:
@@ -50,9 +50,9 @@ MonoBehaviour:
     TargetPortName: Input
   - BaseNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     BasePortName: Output
-    TargetNodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     TargetPortName: Input
   - BaseNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     BasePortName: Output
-    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    TargetNodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
     TargetPortName: Input

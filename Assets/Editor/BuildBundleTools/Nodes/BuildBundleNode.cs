@@ -1,39 +1,51 @@
-﻿using UnityEditor;
+﻿using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using YY.Build.Core;
-using YY.Build.Data; // 引用 BuildContext
 
 namespace YY.Build.Graph.Nodes
 {
     public class BuildBundleNode : BaseBuildNode
     {
-        // 配置参数
+        // --- 数据 ---
         public string OutputPath = "StreamingRes/Bundles";
-        public BuildAssetBundleOptions Compression = BuildAssetBundleOptions.ChunkBasedCompression;
         public BuildTarget TargetPlatform = BuildTarget.StandaloneWindows64;
+        public BuildAssetBundleOptions BuildOptions = BuildAssetBundleOptions.None;
+        public string ManifestName = "sys_manifest";
 
-        // UI 引用
         private TextField _pathField;
-        private EnumField _compressionField;
+        private TextField _manifestField;
         private EnumField _targetField;
+        private EnumField _compField;
+        private Dictionary<BuildAssetBundleOptions, Toggle> _optionToggles = new Dictionary<BuildAssetBundleOptions, Toggle>();
+
+        private enum CompressionType { LZMA_Default, LZ4_ChunkBased, Uncompressed }
+        private CompressionType _compressionType = CompressionType.LZ4_ChunkBased;
 
         public override void Initialize()
         {
             title = "Export: Build AssetBundles";
 
-            // 它是终点，只有输入
             AddInputPort("Input", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);
 
-            // --- 绘制配置 UI ---
-            var container = new VisualElement();
-            container.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
-            container.style.paddingTop = 5;
-            container.style.paddingBottom = 5;
-            container.style.paddingLeft = 5;
-            container.style.paddingRight = 5;
+            //初始化数据
+            ParseOptionsToUI();
 
-            // 1. 输出路径
+            //构建 UI
+            DrawUI();
+        }
+
+        private void DrawUI()
+        {
+            var root = new VisualElement();
+            root.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
+            root.style.paddingTop = 5; root.style.paddingBottom = 5;
+            root.style.paddingLeft = 5; root.style.paddingRight = 5;
+            root.style.width = 260;
+
+            // --- A. 输出路径 ---
             var pathRow = new VisualElement { style = { flexDirection = FlexDirection.Row } };
             _pathField = new TextField("Output:") { value = OutputPath, style = { flexGrow = 1 } };
             _pathField.RegisterValueChangedCallback(e => { OutputPath = e.newValue; NotifyChange(); });
@@ -43,88 +55,117 @@ namespace YY.Build.Graph.Nodes
                 string path = EditorUtility.OpenFolderPanel("Select Output Directory", OutputPath, "");
                 if (!string.IsNullOrEmpty(path))
                 {
-                    // 尝试转为相对路径，方便团队协作
-                    if (path.StartsWith(Application.dataPath))
-                        path = "Assets" + path.Substring(Application.dataPath.Length);
-                    else if (path.Contains(Application.dataPath + "/../")) // 也就是项目根目录
-                        path = path.Replace(Application.dataPath + "/../", "");
-
+                    if (path.StartsWith(Application.dataPath)) path = "Assets" + path.Substring(Application.dataPath.Length);
+                    else if (path.Contains(Application.dataPath + "/../")) path = path.Replace(Application.dataPath + "/../", "");
                     OutputPath = path;
                     _pathField.value = path;
                     NotifyChange();
                 }
             })
             { text = "..." };
-
             pathRow.Add(_pathField);
             pathRow.Add(browseBtn);
 
-            // 2. 压缩格式
-            _compressionField = new EnumField("Compression:", Compression);
-            _compressionField.RegisterValueChangedCallback(e => { Compression = (BuildAssetBundleOptions)e.newValue; NotifyChange(); });
+            _manifestField = new TextField("Manifest Name:") { value = ManifestName };
+            _manifestField.RegisterValueChangedCallback(e => { ManifestName = e.newValue; NotifyChange(); });
+            root.Add(_manifestField);
 
-            // 3. 目标平台 (默认为当前平台)
+            // --- B. 平台 ---
             if (TargetPlatform == 0) TargetPlatform = EditorUserBuildSettings.activeBuildTarget;
             _targetField = new EnumField("Target:", TargetPlatform);
             _targetField.RegisterValueChangedCallback(e => { TargetPlatform = (BuildTarget)e.newValue; NotifyChange(); });
 
-            // 4. 打包按钮 (大号)
+            // --- C. 压缩 ---
+            _compField = new EnumField("Compression:", _compressionType);
+            _compField.RegisterValueChangedCallback(e =>
+            {
+                _compressionType = (CompressionType)e.newValue;
+                UpdateOptionsFromUI();
+                NotifyChange();
+            });
+
+            // --- D. 常用开关 ---
+            var forceToggle = CreateFlagToggle("Force Rebuild", BuildAssetBundleOptions.ForceRebuildAssetBundle);
+            var hashToggle = CreateFlagToggle("Append Hash", BuildAssetBundleOptions.AppendHashToAssetBundleName);
+
+            // --- E. 高级选项折叠 ---
+            var foldout = new Foldout { text = "Advanced Options", value = false };
+            foldout.style.marginTop = 5;
+            foldout.Add(CreateFlagToggle("Strict Mode", BuildAssetBundleOptions.StrictMode));
+            foldout.Add(CreateFlagToggle("Dry Run Build", BuildAssetBundleOptions.DryRunBuild));
+            foldout.Add(CreateFlagToggle("Disable Write TypeTree", BuildAssetBundleOptions.DisableWriteTypeTree));
+            foldout.Add(CreateFlagToggle("Ignore TypeTree Changes", BuildAssetBundleOptions.IgnoreTypeTreeChanges));
+
+            // --- F. Build 按钮 ---
             var buildBtn = new Button(OnBuildClick)
             {
-                text = "BUILD",
-                style = {
-                    height = 30,
-                    marginTop = 10,
-                    backgroundColor = new Color(0.2f, 0.6f, 0.2f),
-                    unityFontStyleAndWeight = FontStyle.Bold
-                }
+                text = "BUILD Bundles",
+                style = { height = 30, marginTop = 10, backgroundColor = new Color(0.2f, 0.6f, 0.2f), unityFontStyleAndWeight = FontStyle.Bold }
             };
 
-            container.Add(pathRow);
-            container.Add(_compressionField);
-            container.Add(_targetField);
-            container.Add(buildBtn);
+            root.Add(pathRow);
+            root.Add(_targetField);
+            root.Add(_compField);
+            root.Add(forceToggle);
+            root.Add(hashToggle);
+            root.Add(foldout);
+            root.Add(buildBtn);
 
-            mainContainer.Add(container);
+            mainContainer.Add(root);
+        }
+
+        private Toggle CreateFlagToggle(string label, BuildAssetBundleOptions flag)
+        {
+            bool hasFlag = (BuildOptions & flag) != 0;
+            var toggle = new Toggle(label) { value = hasFlag };
+            toggle.RegisterValueChangedCallback(e =>
+            {
+                if (e.newValue) BuildOptions |= flag;
+                else BuildOptions &= ~flag;
+                NotifyChange();
+            });
+
+            _optionToggles[flag] = toggle;
+
+            return toggle;
         }
 
         private void OnBuildClick()
         {
-            // 1. 运行图逻辑，收集数据
+            UpdateOptionsFromUI();
             Debug.Log($"[BuildBundleNode] Collecting Assets...");
             var context = GraphRunner.Run(this);
 
-            Debug.Log($"[BuildBundleNode] Assets collected: {context.Assets.Count}");
+            // 透传参数给 PipelineLauncher
+            bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, context.Assets, ManifestName);
 
-            // 2. 触发 SBP
-            bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, Compression, context.Assets);
-
-            if (success)
-            {
-                EditorUtility.DisplayDialog("Build Success", $"Successfully built bundles to:\n{OutputPath}", "OK");
-                EditorUtility.RevealInFinder(OutputPath);
-            }
-            else
-            {
-                EditorUtility.DisplayDialog("Build Failed", "Check Console for details.", "OK");
-            }
+            //if (success) EditorUtility.RevealInFinder(OutputPath);
         }
 
-        // --- 执行逻辑 ---
-        public override System.Collections.Generic.Dictionary<string, BuildContext> Execute(BuildContext context)
+        // --- 逻辑辅助 ---
+        private void ParseOptionsToUI()
         {
-            // 作为终点节点，它不产生向下游的数据，只记录日志
-            context.Logs.AppendLine($"[BuildBundleNode] Ready to build {context.Assets.Count} assets to {OutputPath}");
-            return base.Execute(context);
+            if ((BuildOptions & BuildAssetBundleOptions.ChunkBasedCompression) != 0) _compressionType = CompressionType.LZ4_ChunkBased;
+            else if ((BuildOptions & BuildAssetBundleOptions.UncompressedAssetBundle) != 0) _compressionType = CompressionType.Uncompressed;
+            else _compressionType = CompressionType.LZMA_Default;
         }
 
-        // --- 序列化 ---
-        [System.Serializable]
-        class NodeData { public string outPath; public BuildAssetBundleOptions compress; public BuildTarget target; }
+        private void UpdateOptionsFromUI()
+        {
+            BuildOptions &= ~BuildAssetBundleOptions.ChunkBasedCompression;
+            BuildOptions &= ~BuildAssetBundleOptions.UncompressedAssetBundle;
+            switch (_compressionType)
+            {
+                case CompressionType.LZ4_ChunkBased: BuildOptions |= BuildAssetBundleOptions.ChunkBasedCompression; break;
+                case CompressionType.Uncompressed: BuildOptions |= BuildAssetBundleOptions.UncompressedAssetBundle; break;
+            }
+        }
+        [Serializable] class NodeData { public string outPath; public BuildTarget target; public BuildAssetBundleOptions options; public string manifestName; }
 
         public override string SaveToJSON()
         {
-            return JsonUtility.ToJson(new NodeData { outPath = OutputPath, compress = Compression, target = TargetPlatform });
+            UpdateOptionsFromUI();
+            return JsonUtility.ToJson(new NodeData { outPath = OutputPath, target = TargetPlatform, options = BuildOptions, manifestName = ManifestName });
         }
 
         public override void LoadFromJSON(string json)
@@ -133,13 +174,28 @@ namespace YY.Build.Graph.Nodes
             if (data != null)
             {
                 OutputPath = data.outPath;
-                Compression = data.compress;
                 TargetPlatform = data.target;
+                BuildOptions = data.options;
+                ManifestName = string.IsNullOrEmpty(data.manifestName) ? "sys_manifest" : data.manifestName;
+                ParseOptionsToUI();
 
                 if (_pathField != null) _pathField.value = OutputPath;
-                if (_compressionField != null) _compressionField.value = Compression;
+                if (_manifestField != null) _manifestField.value = ManifestName;
                 if (_targetField != null) _targetField.value = TargetPlatform;
+                if (_compField != null) _compField.value = _compressionType;
+
+                foreach (var kvp in _optionToggles)
+                {
+                    kvp.Value.value = (BuildOptions & kvp.Key) != 0;
+                }
             }
+        }
+
+        // 终点节点不需要传递数据，只记录日志
+        public override System.Collections.Generic.Dictionary<string, BuildContext> Execute(BuildContext context)
+        {
+            context.Logs.AppendLine($"[BuildBundleNode] Ready to build. Opts: {BuildOptions}");
+            return base.Execute(context);
         }
     }
 }
