@@ -1,0 +1,30 @@
+/* BuildGraphStyles.uss */
+
+/* 节点的基础样式 */
+.node {
+    min-width: 150px;
+    background-color: #2b2b2b;
+}
+
+/* 标题栏颜色 */
+.title {
+    background-color: #3e3e3e;
+    height: 30px;
+}
+
+/* 选中时的边框 */
+.node:checked {
+    border-color: #f4d03f;
+    border-width: 1px;
+}
+
+/* 输入框样式 */
+TextField {
+    margin: 4px;
+}
+
+/* 按钮样式 */
+Button {
+    margin: 4px;
+    background-color: #555;
+}
