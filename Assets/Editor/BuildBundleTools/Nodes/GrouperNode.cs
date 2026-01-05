@@ -28,15 +28,16 @@ namespace YY.Build.Graph.Nodes
             {
                 Mode = (GroupingMode)e.newValue;
                 UpdateUIState();
+                NotifyChange();
             });
 
             _mainKeyField = new TextField("Name/Prefix:");
             _mainKeyField.value = MainKey;
-            _mainKeyField.RegisterValueChangedCallback(e => MainKey = e.newValue);
+            _mainKeyField.RegisterValueChangedCallback(e => { MainKey = e.newValue; NotifyChange(); });
 
             _suffixField = new TextField("Suffix:");
             _suffixField.value = Suffix;
-            _suffixField.RegisterValueChangedCallback(e => Suffix = e.newValue);
+            _suffixField.RegisterValueChangedCallback(e => { Suffix = e.newValue; NotifyChange(); });
 
             mainContainer.Add(_modeField);
             mainContainer.Add(_mainKeyField);

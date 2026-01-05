@@ -60,6 +60,7 @@ namespace YY.Build.Graph.Nodes
                 Rules.Add(new FilterRule { PortName = $"Rule {Rules.Count + 1}", Keyword = ".prefab" });
                 RefreshDynamicPorts();
                 DrawUI(); // 重绘列表
+                NotifyChange();
             })
             { text = "+ Add Rule" };
             container.Add(addBtn);
@@ -73,7 +74,7 @@ namespace YY.Build.Graph.Nodes
 
                 // Enable Toggle
                 var toggle = new Toggle { value = rule.IsEnabled };
-                toggle.RegisterValueChangedCallback(e => rule.IsEnabled = e.newValue);
+                toggle.RegisterValueChangedCallback(e => { rule.IsEnabled = e.newValue; NotifyChange(); });
 
                 // Type Enum
                 var typeField = new EnumField(rule.Type) { style = { width = 80 } };
@@ -81,7 +82,7 @@ namespace YY.Build.Graph.Nodes
 
                 // Keyword Text
                 var kwField = new TextField { value = rule.Keyword, style = { flexGrow = 1 } };
-                kwField.RegisterValueChangedCallback(e => rule.Keyword = e.newValue);
+                kwField.RegisterValueChangedCallback(e => { rule.Keyword = e.newValue; NotifyChange(); });
 
                 // Delete Btn
                 var delBtn = new Button(() =>
@@ -89,6 +90,7 @@ namespace YY.Build.Graph.Nodes
                     Rules.RemoveAt(index);
                     RefreshDynamicPorts();
                     DrawUI();
+                    NotifyChange();
                 })
                 { text = "X", style = { color = Color.red } };
 

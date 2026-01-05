@@ -23,7 +23,11 @@ namespace YY.Build.Graph.Nodes
             var container = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
 
             _textField = new TextField { value = FolderPath, style = { flexGrow = 1 } };
-            _textField.RegisterValueChangedCallback(evt => FolderPath = evt.newValue);
+            _textField.RegisterValueChangedCallback(evt =>
+            {
+                FolderPath = evt.newValue;
+                NotifyChange(); 
+            });
 
             var browseBtn = new Button(() =>
             {

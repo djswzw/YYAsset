@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace YY.Build.Graph
     public class BaseBuildNode : Node
     {
         public string GUID;
-
+        public Action OnDataChanged;
         public BaseBuildNode()
         {
             GUID = System.Guid.NewGuid().ToString();
@@ -27,7 +28,10 @@ namespace YY.Build.Graph
         {
             return new Dictionary<string, BuildContext> { { "Output", context } };
         }
-
+        protected void NotifyChange()
+        {
+            OnDataChanged?.Invoke();
+        }
         // --- 辅助方法 ---
 
         public List<BaseBuildNode> GetInputNodes()

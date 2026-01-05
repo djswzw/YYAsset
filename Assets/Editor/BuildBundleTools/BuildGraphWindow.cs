@@ -18,6 +18,9 @@ namespace YY.Build.Graph
         private VisualElement _previewContainer;
         private ScrollView _previewScrollView;
 
+        // 缓存预览数据，方便重绘
+        private BuildContext _previewContext;
+
         [UnityEditor.Callbacks.OnOpenAsset(1)]
         public static bool OnOpenAsset(EntityId entityId, int line)
         {
@@ -39,16 +42,37 @@ namespace YY.Build.Graph
 
         private void OnEnable()
         {
+            // 【Undo】1. 监听全局撤销重做事件
+            Undo.undoRedoPerformed += OnUndoRedo;
+
             ConstructGraphView();
             GenerateToolbar();
-            CreatePreviewPanel(); // 【新增】初始化预览面板结构
+            CreatePreviewPanel();
 
             if (_currentAsset != null) LoadGraph();
         }
 
         private void OnDisable()
         {
-            if (_currentAsset != null) SaveGraph();
+            // 【Undo】2. 移除监听
+            Undo.undoRedoPerformed -= OnUndoRedo;
+
+            if (_currentAsset != null)
+            {
+                // 关闭窗口时执行一次完整的磁盘保存
+                SaveGraph("Close Window");
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        // 【Undo】3. 当用户按 Ctrl+Z 时触发
+        private void OnUndoRedo()
+        {
+            if (_currentAsset != null)
+            {
+                // 重新从 Asset 加载 View，因为 Asset 的数据已经被 Unity 回滚了
+                LoadGraph();
+            }
         }
 
         private void ConstructGraphView()
@@ -59,6 +83,11 @@ namespace YY.Build.Graph
             {
                 name = "Build Graph"
             };
+
+            // 【Undo】4. 监听 GraphView 的拓扑变化 (移动/删除/连线)
+            // 注意：这需要 BuildGraphView.cs 中暴露了 OnGraphViewChanged 委托
+            _graphView.OnGraphViewChanged = HandleGraphViewChanges;
+
             _graphView.StretchToParentSize();
             // 确保 GraphView 在最底层
             rootVisualElement.Insert(0, _graphView);
@@ -72,155 +101,51 @@ namespace YY.Build.Graph
             _graphView.AddManipulator(menu);
         }
 
-        // --- 【关键】创建 UI Toolkit 风格的预览面板 ---
-        private void CreatePreviewPanel()
+        // 【Undo】5. 处理 GraphView 的变化
+        private GraphViewChange HandleGraphViewChanges(GraphViewChange change)
         {
-            // 1. 创建容器
-            _previewContainer = new VisualElement();
-            _previewContainer.name = "PreviewPanel";
+            string undoName = "Graph Change";
+            if (change.movedElements != null) undoName = "Move Nodes";
+            if (change.elementsToRemove != null) undoName = "Delete Elements";
+            if (change.edgesToCreate != null) undoName = "Connect Edge";
 
-            // 2. 设置绝对定位样式 (固定在底部)
-            _previewContainer.style.position = Position.Absolute;
-            _previewContainer.style.bottom = 0;
-            _previewContainer.style.left = 0;
-            _previewContainer.style.right = 0;
-            _previewContainer.style.height = 200;
-            _previewContainer.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.95f); // 深色背景
-            _previewContainer.style.borderTopWidth = 2;
-            _previewContainer.style.borderTopColor = new Color(0.3f, 0.3f, 0.3f);
-            _previewContainer.visible = false; // 默认隐藏
-
-            // 3. 标题栏
-            var header = new VisualElement();
-            header.style.flexDirection = FlexDirection.Row;
-            header.style.height = 25;
-            header.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f);
-            header.style.paddingLeft = 10;
-            header.style.alignItems = Align.Center;
-
-            var titleLabel = new Label("Preview Results");
-            titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            titleLabel.style.flexGrow = 1;
-
-            var closeBtn = new Button(() =>
+            // 延迟一帧保存，等待 View 更新完毕
+            rootVisualElement.schedule.Execute(() =>
             {
-                _previewContainer.visible = false;
-            })
-            { text = "X" };
-            closeBtn.style.width = 25;
+                SaveGraph(undoName);
+            }).ExecuteLater(10);
 
-            header.Add(titleLabel);
-            header.Add(closeBtn);
-
-            // 4. 内容滚动区
-            _previewScrollView = new ScrollView();
-            _previewScrollView.style.paddingLeft = 10;
-            _previewScrollView.style.paddingTop = 10;
-
-            _previewContainer.Add(header);
-            _previewContainer.Add(_previewScrollView);
-
-            // 5. 添加到根节点 (保证在 GraphView 之上)
-            rootVisualElement.Add(_previewContainer);
-        }
-
-        // --- 【关键】刷新预览数据 ---
-        private void UpdatePreviewPanel(BuildContext context)
-        {
-            _previewScrollView.Clear();
-
-            if (context == null)
-            {
-                _previewContainer.visible = false;
-                return;
-            }
-
-            _previewContainer.visible = true;
-
-            // 1. 显示日志
-            if (context.Logs.Length > 0)
-            {
-                var logHeader = new Label("Execution Logs:");
-                logHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-                logHeader.style.color = new Color(0.7f, 0.7f, 0.7f);
-                _previewScrollView.Add(logHeader);
-
-                var logContent = new Label(context.Logs.ToString());
-                logContent.style.whiteSpace = WhiteSpace.Normal; // 自动换行
-                logContent.style.marginBottom = 15;
-                _previewScrollView.Add(logContent);
-            }
-
-            // 2. 显示资产
-            var assetHeader = new Label($"Assets Output ({context.Assets.Count}):");
-            assetHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-            assetHeader.style.color = new Color(0.4f, 0.8f, 0.4f);
-            _previewScrollView.Add(assetHeader);
-
-            if (context.Assets.Count == 0)
-            {
-                _previewScrollView.Add(new Label("  (Empty List)") { style = { color = Color.gray } });
-            }
-            else
-            {
-                foreach (var asset in context.Assets)
-                {
-                    string bundleText = string.IsNullOrEmpty(asset.BundleName) ? "[No Bundle]" : $"[{asset.BundleName}]";
-                    var row = new Label($"{bundleText}  {asset.AssetPath}");
-
-                    // 给 Bundle 名加个颜色区分
-                    if (!string.IsNullOrEmpty(asset.BundleName))
-                    {
-                        row.style.color = new Color(0.8f, 0.8f, 1f); // 淡蓝色
-                    }
-                    _previewScrollView.Add(row);
-                }
-            }
-        }
-
-        private void PreviewSelectedNode()
-        {
-            if (_graphView.selection.Count > 0 && _graphView.selection[0] is BaseBuildNode selectedNode)
-            {
-                Debug.Log($"[BuildGraph] Previewing: {selectedNode.title}");
-                var context = GraphRunner.Run(selectedNode);
-
-                // 【调用 UI 更新】
-                UpdatePreviewPanel(context);
-            }
-            else
-            {
-                Debug.LogWarning("Please select a node first.");
-                UpdatePreviewPanel(null);
-            }
-        }
-
-        private void GenerateToolbar()
-        {
-            var existingToolbar = rootVisualElement.Q<UnityEditor.UIElements.Toolbar>();
-            if (existingToolbar != null) rootVisualElement.Remove(existingToolbar);
-
-            var toolbar = new UnityEditor.UIElements.Toolbar();
-            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => SaveGraph()) { text = "Save Asset" });
-            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => LoadGraph()) { text = "Reload" });
-            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => PreviewSelectedNode()) { text = "Preview Selection" });
-            toolbar.Add(new Label(_currentAsset != null ? $"File: {_currentAsset.name}" : "No Asset") { style = { marginLeft = 10, unityTextAlign = TextAnchor.MiddleLeft } });
-
-            rootVisualElement.Add(toolbar);
+            return change;
         }
 
         private void CreateNode<T>(Vector2 mousePos) where T : BaseBuildNode, new()
         {
+            // 【Undo】创建前记录状态
+            SaveGraph("Before Create Node");
+
             var node = new T();
             node.Initialize();
+
+            // 【Undo】6. 绑定节点内部数据的变更 (TextField 修改等)
+            // 当节点内部调用 NotifyChange 时，触发保存
+            node.OnDataChanged = () => SaveGraph("Node Data Change");
+
             Vector2 graphPos = _graphView.contentViewContainer.WorldToLocal(mousePos);
             node.SetPosition(new Rect(graphPos, Vector2.zero));
             _graphView.AddElement(node);
+
+            // 【Undo】创建后记录状态
+            SaveGraph("Create Node");
         }
 
-        private void SaveGraph()
+        // --- Save Logic (改造支持 Undo) ---
+        private void SaveGraph(string undoName = "Save Graph")
         {
             if (_currentAsset == null) return;
+
+            // 【Undo】7. 关键：记录快照
+            Undo.RecordObject(_currentAsset, undoName);
+
             _currentAsset.Nodes.Clear();
             _currentAsset.Edges.Clear();
 
@@ -247,17 +172,22 @@ namespace YY.Build.Graph
                     TargetPortName = edge.input.portName
                 });
             }
+
+            // 标记脏数据，但不强制写磁盘 (为了性能)
             EditorUtility.SetDirty(_currentAsset);
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[BuildGraph] Saved.");
         }
 
+        // --- Load Logic (改造支持事件绑定) ---
         private void LoadGraph()
         {
             if (_currentAsset == null) return;
+
+            // 清空现有元素
             _graphView.DeleteElements(_graphView.graphElements);
+
             var nodeDict = new Dictionary<string, BaseBuildNode>();
 
+            // 恢复节点
             foreach (var nodeData in _currentAsset.Nodes)
             {
                 var nodeType = System.Type.GetType(nodeData.NodeType);
@@ -266,13 +196,19 @@ namespace YY.Build.Graph
 
                 var node = System.Activator.CreateInstance(nodeType) as BaseBuildNode;
                 node.Initialize();
-                node.GUID = nodeData.NodeGUID; node.title = nodeData.Title;
+                node.GUID = nodeData.NodeGUID;
+                node.title = nodeData.Title;
                 node.SetPosition(new Rect(nodeData.Position, Vector2.zero));
                 node.LoadFromJSON(nodeData.JsonData);
+
+                // 【Undo】8. 恢复节点时，重新绑定数据变更事件
+                node.OnDataChanged = () => SaveGraph("Node Value Change");
+
                 _graphView.AddElement(node);
                 nodeDict.Add(node.GUID, node);
             }
 
+            // 恢复连线
             foreach (var edgeData in _currentAsset.Edges)
             {
                 if (nodeDict.TryGetValue(edgeData.BaseNodeGUID, out var outNode) && nodeDict.TryGetValue(edgeData.TargetNodeGUID, out var inNode))
@@ -281,6 +217,131 @@ namespace YY.Build.Graph
                     var inPort = inNode.inputContainer.Q<Port>(edgeData.TargetPortName);
                     if (outPort != null && inPort != null) _graphView.AddElement(outPort.ConnectTo(inPort));
                 }
+            }
+        }
+
+        // --- Toolbar ---
+        private void GenerateToolbar()
+        {
+            var existingToolbar = rootVisualElement.Q<UnityEditor.UIElements.Toolbar>();
+            if (existingToolbar != null) rootVisualElement.Remove(existingToolbar);
+
+            var toolbar = new UnityEditor.UIElements.Toolbar();
+
+            // 【Undo】Save 按钮改为强制写磁盘
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() =>
+            {
+                SaveGraph("Force Save");
+                AssetDatabase.SaveAssets();
+            })
+            { text = "Force Save" });
+
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => LoadGraph()) { text = "Reload" });
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => PreviewSelectedNode()) { text = "Preview Selection" });
+            toolbar.Add(new Label(_currentAsset != null ? $"File: {_currentAsset.name}" : "No Asset") { style = { marginLeft = 10, unityTextAlign = TextAnchor.MiddleLeft } });
+
+            rootVisualElement.Add(toolbar);
+        }
+
+        // --- 预览面板相关 (保持 UI Toolkit 写法) ---
+        private void CreatePreviewPanel()
+        {
+            _previewContainer = new VisualElement();
+            _previewContainer.name = "PreviewPanel";
+            _previewContainer.style.position = Position.Absolute;
+            _previewContainer.style.bottom = 0;
+            _previewContainer.style.left = 0;
+            _previewContainer.style.right = 0;
+            _previewContainer.style.height = 200;
+            _previewContainer.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.95f);
+            _previewContainer.style.borderTopWidth = 2;
+            _previewContainer.style.borderTopColor = new Color(0.3f, 0.3f, 0.3f);
+            _previewContainer.visible = false;
+
+            var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            header.style.height = 25;
+            header.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f);
+            header.style.paddingLeft = 10;
+            header.style.alignItems = Align.Center;
+
+            var titleLabel = new Label("Preview Results");
+            titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            titleLabel.style.flexGrow = 1;
+
+            var closeBtn = new Button(() => { _previewContainer.visible = false; }) { text = "X" };
+            closeBtn.style.width = 25;
+
+            header.Add(titleLabel);
+            header.Add(closeBtn);
+
+            _previewScrollView = new ScrollView();
+            _previewScrollView.style.paddingLeft = 10;
+            _previewScrollView.style.paddingTop = 10;
+
+            _previewContainer.Add(header);
+            _previewContainer.Add(_previewScrollView);
+            rootVisualElement.Add(_previewContainer);
+        }
+
+        private void UpdatePreviewPanel(BuildContext context)
+        {
+            _previewScrollView.Clear();
+
+            if (context == null)
+            {
+                _previewContainer.visible = false;
+                return;
+            }
+
+            _previewContainer.visible = true;
+
+            if (context.Logs.Length > 0)
+            {
+                var logHeader = new Label("Execution Logs:");
+                logHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
+                logHeader.style.color = new Color(0.7f, 0.7f, 0.7f);
+                _previewScrollView.Add(logHeader);
+
+                var logContent = new Label(context.Logs.ToString());
+                logContent.style.whiteSpace = WhiteSpace.Normal;
+                logContent.style.marginBottom = 15;
+                _previewScrollView.Add(logContent);
+            }
+
+            var assetHeader = new Label($"Assets Output ({context.Assets.Count}):");
+            assetHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
+            assetHeader.style.color = new Color(0.4f, 0.8f, 0.4f);
+            _previewScrollView.Add(assetHeader);
+
+            if (context.Assets.Count == 0)
+            {
+                _previewScrollView.Add(new Label("  (Empty List)") { style = { color = Color.gray } });
+            }
+            else
+            {
+                foreach (var asset in context.Assets)
+                {
+                    string bundleText = string.IsNullOrEmpty(asset.BundleName) ? "[No Bundle]" : $"[{asset.BundleName}]";
+                    var row = new Label($"{bundleText}  {asset.AssetPath}");
+                    if (!string.IsNullOrEmpty(asset.BundleName)) row.style.color = new Color(0.8f, 0.8f, 1f);
+                    _previewScrollView.Add(row);
+                }
+            }
+        }
+
+        private void PreviewSelectedNode()
+        {
+            if (_graphView.selection.Count > 0 && _graphView.selection[0] is BaseBuildNode selectedNode)
+            {
+                Debug.Log($"[BuildGraph] Previewing: {selectedNode.title}");
+                var context = GraphRunner.Run(selectedNode);
+                UpdatePreviewPanel(context);
+            }
+            else
+            {
+                Debug.LogWarning("Please select a node first.");
+                UpdatePreviewPanel(null);
             }
         }
     }
