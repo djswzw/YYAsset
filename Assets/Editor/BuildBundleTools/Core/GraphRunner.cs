@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using YY.Build.Graph;
 
@@ -10,6 +9,8 @@ namespace YY.Build.Core
         // 存储每个节点每个端口输出的数据
         // Key: NodeGUID, Value: { PortName -> Context }
         private static Dictionary<string, Dictionary<string, BuildContext>> _dataMap;
+
+        public static Dictionary<string, Dictionary<string, BuildContext>> DataMap { get => _dataMap; set => _dataMap = value; }
 
         public static BuildContext Run(BaseBuildNode startNode)
         {
