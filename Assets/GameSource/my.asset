@@ -13,11 +13,6 @@ MonoBehaviour:
   m_Name: my
   m_EditorClassIdentifier: Assembly-CSharp-Editor::YY.Build.Data.BuildGraphAsset
   Nodes:
-  - NodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
-    Title: 'Source: Directory'
-    Position: {x: -138, y: 3}
-    NodeType: YY.Build.Graph.Nodes.DirectoryNode
-    JsonData: '{"path":"Assets/GameAssets"}'
   - NodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
     Title: Advanced Filter
     Position: {x: 67, y: -16}
@@ -25,46 +20,66 @@ MonoBehaviour:
     JsonData: '{"rules":[{"IsEnabled":true,"Type":1,"Keyword":"uipanel/","PortName":"Rule
       1"},{"IsEnabled":true,"Type":1,"Keyword":"scenes/","PortName":"Rule 2"},{"IsEnabled":true,"Type":1,"Keyword":"uiatlas/","PortName":"Rule
       3"},{"IsEnabled":true,"Type":1,"Keyword":"textures/","PortName":"Rule 4"}]}'
-  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
-    Title: 'Strategy: Grouper'
-    Position: {x: 322, y: 149}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":2,"key":"scene/","suffix":".b"}'
-  - NodeGUID: e5e1c694-75f9-4b6d-9f87-61d3fb172b3c
-    Title: 'Strategy: Grouper'
-    Position: {x: 109, y: 378}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":2,"key":"textures/","suffix":".b"}'
-  - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
-    Title: 'Export: Build AssetBundles'
-    Position: {x: 844, y: -109}
-    NodeType: YY.Build.Graph.Nodes.BuildBundleNode
-    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
   - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     Title: 'Strategy: Grouper'
     Position: {x: 337, y: -33}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
+  - NodeGUID: e5e1c694-75f9-4b6d-9f87-61d3fb172b3c
+    Title: 'Strategy: Grouper'
+    Position: {x: 108, y: 391}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"textures/","suffix":".b"}'
   - NodeGUID: f19baaa8-56ae-498b-bfb1-6944d4285f06
     Title: 'Strategy: Grouper'
-    Position: {x: 322, y: 318}
+    Position: {x: 355, y: 318}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":2,"key":"atlas/","suffix":".b"}'
+  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    Title: 'Strategy: Grouper'
+    Position: {x: 322, y: 149}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"scene/","suffix":".b"}'
+  - NodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
+    Title: 'Source: Directory'
+    Position: {x: -138, y: 3}
+    NodeType: YY.Build.Graph.Nodes.DirectoryNode
+    JsonData: '{"path":"Assets/GameAssets"}'
   - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
     Title: 'Process: Deduplicator'
-    Position: {x: 545, y: 66}
+    Position: {x: 605, y: 3}
     NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
     JsonData: '{"recursive":false}'
+  - NodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
+    Title: 'Process: Merge'
+    Position: {x: 605, y: 407}
+    NodeType: YY.Build.Graph.Nodes.MergeNode
+    JsonData: '{}'
   - NodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
     Title: 'Strategy: Grouper'
-    Position: {x: 642, y: 274}
+    Position: {x: 647, y: 202}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":0,"key":"uide","suffix":".b"}'
+  - NodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
+    Title: Portal (Sender)
+    Position: {x: 802, y: 435}
+    NodeType: YY.Build.Graph.Nodes.PortalSenderNode
+    JsonData: '{"id":"gameAssets"}'
+  - NodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
+    Title: Portal (Receiver)
+    Position: {x: 1144, y: 216}
+    NodeType: YY.Build.Graph.Nodes.PortalReceiverNode
+    JsonData: '{"id":"gameAssets"}'
   - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     Title: 'Editor: Set Bundle Names'
-    Position: {x: 915, y: 217}
+    Position: {x: 1447, y: 281}
     NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
     JsonData: '{}'
+  - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    Title: 'Export: Build AssetBundles'
+    Position: {x: 1433, y: -33}
+    NodeType: YY.Build.Graph.Nodes.BuildBundleNode
+    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output
@@ -102,19 +117,35 @@ MonoBehaviour:
     BasePortName: Deps Only (Unique)
     TargetNodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
     TargetPortName: Input
-  - BaseNodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
+  - BaseNodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
     BasePortName: Output
-    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    TargetNodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
     TargetPortName: Input
   - BaseNodeGUID: f19baaa8-56ae-498b-bfb1-6944d4285f06
     BasePortName: Output
-    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    TargetNodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
     TargetPortName: Input
   - BaseNodeGUID: e5e1c694-75f9-4b6d-9f87-61d3fb172b3c
     BasePortName: Output
-    TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    TargetNodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
     TargetPortName: Input
   - BaseNodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     BasePortName: Output
+    TargetNodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
+    TargetPortName: Input
+  - BaseNodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
+    BasePortName: Output
+    TargetNodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
+    TargetPortName: Input
+  - BaseNodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
+    BasePortName: Output
+    TargetNodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
+    TargetPortName: Input
+  - BaseNodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
+    BasePortName: Output
     TargetNodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    TargetPortName: Input
+  - BaseNodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
+    BasePortName: Output
+    TargetNodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
     TargetPortName: Input

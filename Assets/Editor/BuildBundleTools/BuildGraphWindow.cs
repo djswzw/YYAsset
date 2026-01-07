@@ -97,6 +97,9 @@ namespace YY.Build.Graph
                 evt.menu.AppendAction("Source/Directory Node", action => CreateNode<DirectoryNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Process/Filter Node", action => CreateNode<FilterNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Process/Dependency Node", action => CreateNode<DependencyNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Process/Merge Node", action => CreateNode<MergeNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Process/Portal Sender", action => CreateNode<PortalSenderNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Process/Portal Receiver", action => CreateNode<PortalReceiverNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Strategy/Grouper Node", action => CreateNode<GrouperNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Strategy/Deduplicator Node", action => CreateNode<DeduplicatorNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Build Bundle Node", action => CreateNode<BuildBundleNode>(action.eventInfo.localMousePosition));
@@ -443,7 +446,10 @@ namespace YY.Build.Graph
             if (_graphView.selection.Count > 0 && _graphView.selection[0] is BaseBuildNode selectedNode)
             {
                 Debug.Log($"[BuildGraph] Previewing: {selectedNode.title}");
-                var context = GraphRunner.Run(selectedNode);
+                // 获取图中所有节点传给 Runner
+                var allNodes = _graphView.nodes.ToList().Cast<BaseBuildNode>().ToList();
+
+                var context = GraphRunner.Run(selectedNode, allNodes);
                 UpdatePreviewPanel(context);
             }
             else

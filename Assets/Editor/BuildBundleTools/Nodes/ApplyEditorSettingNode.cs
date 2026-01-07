@@ -1,9 +1,10 @@
-﻿using UnityEditor;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using YY.Build.Core;
 using YY.Build.Data;
-using System.Collections.Generic;
 
 namespace YY.Build.Graph.Nodes
 {
@@ -55,10 +56,10 @@ namespace YY.Build.Graph.Nodes
             //if (!EditorUtility.DisplayDialog("Confirm", "This will modify the 'AssetBundle Name' settings in the Inspector for ALL collected assets. Continue?", "Yes", "No"))
             //    return;
 
-            Debug.Log("[ApplyToEditor] Collecting Assets...");
+            var graphView = GetFirstAncestorOfType<UnityEditor.Experimental.GraphView.GraphView>();
+            var allNodes = graphView.nodes.ToList().Cast<BaseBuildNode>().ToList();
 
-            // 1. 执行图逻辑收集数据
-            var context = GraphRunner.Run(this);
+            var context = GraphRunner.Run(this, allNodes);
 
             if (context.Assets == null || context.Assets.Count == 0)
             {

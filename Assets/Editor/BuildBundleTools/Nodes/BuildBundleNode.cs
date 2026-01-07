@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -133,8 +134,10 @@ namespace YY.Build.Graph.Nodes
         private void OnBuildClick()
         {
             UpdateOptionsFromUI();
-            Debug.Log($"[BuildBundleNode] Collecting Assets...");
-            var context = GraphRunner.Run(this);
+            var graphView = GetFirstAncestorOfType<UnityEditor.Experimental.GraphView.GraphView>();
+            var allNodes = graphView.nodes.ToList().Cast<BaseBuildNode>().ToList();
+
+            var context = GraphRunner.Run(this, allNodes);
 
             // 透传参数给 PipelineLauncher
             bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, context.Assets, ManifestName);
