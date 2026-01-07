@@ -23,7 +23,7 @@ MonoBehaviour:
     Position: {x: -110, y: -39}
     NodeType: YY.Build.Graph.Nodes.FilterNode
     JsonData: '{"rules":[{"IsEnabled":true,"Type":1,"Keyword":"Assets/GameAssets/uipanel/","PortName":"Rule
-      1"},{"IsEnabled":true,"Type":1,"Keyword":"Assets/Scenes/","PortName":"Rule
+      1"},{"IsEnabled":true,"Type":1,"Keyword":"Assets/GameAssets/scenes/","PortName":"Rule
       2"},{"IsEnabled":true,"Type":1,"Keyword":"Assets/GameAssets/uiatlas/","PortName":"Rule
       3"},{"IsEnabled":true,"Type":1,"Keyword":"Assets/GameAssets/textures/","PortName":"Rule
       4"}]}'
@@ -32,16 +32,6 @@ MonoBehaviour:
     Position: {x: -314, y: 38}
     NodeType: YY.Build.Graph.Nodes.DirectoryNode
     JsonData: '{"path":"Assets/GameAssets"}'
-  - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
-    Title: uiviewgroup
-    Position: {x: 335, y: -57}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
-  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
-    Title: scenegroup
-    Position: {x: 322, y: 118}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":2,"key":"scene/","suffix":".b"}'
   - NodeGUID: f19baaa8-56ae-498b-bfb1-6944d4285f06
     Title: uiatlasgrouop
     Position: {x: 346, y: 276}
@@ -67,26 +57,36 @@ MonoBehaviour:
     Position: {x: 1209, y: 428}
     NodeType: YY.Build.Graph.Nodes.ViewerNode
     JsonData: '{}'
-  - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
-    Title: deduplicator
-    Position: {x: 647, y: 6}
-    NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
-    JsonData: '{"recursive":false}'
-  - NodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
-    Title: uidep
-    Position: {x: 626, y: 202}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":0,"key":"Bundle Name:","suffix":".b"}'
-  - NodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
-    Title: 'Container: Sub-Graph'
-    Position: {x: 292, y: 521}
-    NodeType: YY.Build.Graph.Nodes.SubGraphNode
-    JsonData: '{"assetGuid":"a291d273d3df3c74e97ddf98f9200c3b"}'
   - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     Title: 'Editor: Set Bundle Names'
     Position: {x: 1374, y: 183}
     NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
     JsonData: '{}'
+  - NodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
+    Title: 'Container: Sub-Graph'
+    Position: {x: 322, y: 513}
+    NodeType: YY.Build.Graph.Nodes.SubGraphNode
+    JsonData: '{"assetGuid":"a291d273d3df3c74e97ddf98f9200c3b"}'
+  - NodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
+    Title: uidep
+    Position: {x: 664, y: 220}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":0,"key":"uidep","suffix":".b"}'
+  - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
+    Title: deduplicator
+    Position: {x: 647, y: 6}
+    NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
+    JsonData: '{"recursive":false}'
+  - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
+    Title: uiviewgroup
+    Position: {x: 335, y: -57}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
+  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    Title: scenegroup
+    Position: {x: 322, y: 118}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"scene/","suffix":".b"}'
   - NodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
     Title: Portal (Sender)
     Position: {x: 859, y: 407}

@@ -19,8 +19,13 @@ MonoBehaviour:
     NodeType: YY.Build.Graph.Nodes.FilterNode
     JsonData: '{"rules":[{"IsEnabled":true,"Type":0,"Keyword":".shader","PortName":"Rule
       1"}]}'
+  - NodeGUID: a60040f8-b1d4-425f-83a8-0d173585d159
+    Title: 'Source: Directory'
+    Position: {x: 74, y: 190}
+    NodeType: YY.Build.Graph.Nodes.DirectoryNode
+    JsonData: '{"path":"Assets/GameSource/Shaders"}'
   - NodeGUID: cc4eb698-3846-4fa5-9a34-ec782eb6b7e5
-    Title: 'Strategy: Grouper'
+    Title: shadergroup
     Position: {x: 619, y: 292}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":0,"key":"shaders","suffix":".b"}'
@@ -29,11 +34,6 @@ MonoBehaviour:
     Position: {x: 910, y: 400}
     NodeType: YY.Build.Graph.Nodes.SubGraphOutputNode
     JsonData: '{}'
-  - NodeGUID: a60040f8-b1d4-425f-83a8-0d173585d159
-    Title: 'Source: Directory'
-    Position: {x: 74, y: 190}
-    NodeType: YY.Build.Graph.Nodes.DirectoryNode
-    JsonData: '{"path":"Assets/GameSource/Shaders"}'
   Edges:
   - BaseNodeGUID: a60040f8-b1d4-425f-83a8-0d173585d159
     BasePortName: Output

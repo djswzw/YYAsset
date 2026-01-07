@@ -56,7 +56,7 @@ namespace YY.Build.Graph.Nodes
         // --- 执行逻辑 ---
         public override Dictionary<string, BuildContext> Execute(BuildContext context)
         {
-            context.Logs.AppendLine($"[GrouperNode] Mode: {Mode}");
+            context.Logs.AppendLine($"[GrouperNode] {title} Mode: {Mode}");
 
             foreach (var asset in context.Assets)
             {
