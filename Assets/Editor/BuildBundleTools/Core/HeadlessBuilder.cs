@@ -83,27 +83,9 @@ namespace YY.Build.Core
 
             // 5. 执行图逻辑 (Headless)
             // 因为我们已经手动 AddUpstreamConnection 了，GraphRunner.RunHeadless 可以直接跑
-            var context = GraphRunner.RunHeadless(targetNode);
+            var context = GraphRunner.RunHeadless(targetNode, true);
 
-            // 6. 执行打包
-            // 此时 context.Assets 已经准备好了
-            // BuildBundleNode 的参数 (Path, Options) 已经在 LoadFromJSON 时恢复了
-            // 但 GraphRunner 只是跑了 Execute 获取数据，BuildBundleNode 真正的打包逻辑是在 OnBuildClick 里调用的 PipelineLauncher
-
-            // 我们需要手动触发 BuildBundleNode 的打包逻辑
-            if (targetNode is BuildBundleNode buildNode)
-            {
-                // 透传参数，直接调用 Launcher
-                bool success = PipelineLauncher.Build(
-                    buildNode.OutputPath,
-                    buildNode.TargetPlatform,
-                    buildNode.BuildOptions,
-                    context.Assets,
-                    buildNode.ManifestName
-                );
-
-                if (!success) throw new Exception("Headless Build Failed!");
-            }
+            Debug.Log("[HeadlessBuilder] Build Complete.");
         }
 
         public static void TestHeadless()

@@ -13,11 +13,6 @@ MonoBehaviour:
   m_Name: main
   m_EditorClassIdentifier: Assembly-CSharp-Editor::YY.Build.Data.BuildGraphAsset
   Nodes:
-  - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
-    Title: 'Export: Build AssetBundles'
-    Position: {x: 1360, y: -131}
-    NodeType: YY.Build.Graph.Nodes.BuildBundleNode
-    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
   - NodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
     Title: gameassetFilter
     Position: {x: -110, y: -39}
@@ -47,21 +42,6 @@ MonoBehaviour:
     Position: {x: 605, y: 407}
     NodeType: YY.Build.Graph.Nodes.MergeNode
     JsonData: '{}'
-  - NodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
-    Title: Portal (Receiver)
-    Position: {x: 1071, y: 118}
-    NodeType: YY.Build.Graph.Nodes.PortalReceiverNode
-    JsonData: '{"id":"gameAssets"}'
-  - NodeGUID: cfb4c3d6-deb8-4e10-b283-952d3b4e13e2
-    Title: 'Debug: Asset Viewer'
-    Position: {x: 1209, y: 428}
-    NodeType: YY.Build.Graph.Nodes.ViewerNode
-    JsonData: '{}'
-  - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
-    Title: 'Editor: Set Bundle Names'
-    Position: {x: 1374, y: 183}
-    NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
-    JsonData: '{}'
   - NodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
     Title: 'Container: Sub-Graph'
     Position: {x: 322, y: 513}
@@ -72,11 +52,6 @@ MonoBehaviour:
     Position: {x: 664, y: 220}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":0,"key":"uidep","suffix":".b"}'
-  - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
-    Title: deduplicator
-    Position: {x: 647, y: 6}
-    NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
-    JsonData: '{"recursive":false}'
   - NodeGUID: 0c9bbc59-3bb9-4e15-9f8e-799c6eb1efb0
     Title: uiviewgroup
     Position: {x: 335, y: -57}
@@ -92,6 +67,46 @@ MonoBehaviour:
     Position: {x: 859, y: 407}
     NodeType: YY.Build.Graph.Nodes.PortalSenderNode
     JsonData: '{"id":"gameAssets"}'
+  - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    Title: 'Editor: Set Bundle Names'
+    Position: {x: 1374, y: 183}
+    NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
+    JsonData: '{}'
+  - NodeGUID: 2312c170-c97d-4cb0-9d26-fb27369981ea
+    Title: 'Final: Batch Build'
+    Position: {x: 1921, y: 220}
+    NodeType: YY.Build.Graph.Nodes.BatchBuildNode
+    JsonData: '{}'
+  - NodeGUID: 680a12f7-3ed2-4518-932a-35838d8a742d
+    Title: 'Export: Build Zip'
+    Position: {x: 1692, y: -284}
+    NodeType: YY.Build.Graph.Nodes.BuildZipNode
+    JsonData: '{"outPath":"StreamingRes/Scripts","zipName":"scripts.zip","pass":""}'
+  - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
+    Title: deduplicator
+    Position: {x: 647, y: 6}
+    NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
+    JsonData: '{"recursive":false}'
+  - NodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
+    Title: Portal (Receiver)
+    Position: {x: 1049, y: 96}
+    NodeType: YY.Build.Graph.Nodes.PortalReceiverNode
+    JsonData: '{"id":"gameAssets"}'
+  - NodeGUID: cfb4c3d6-deb8-4e10-b283-952d3b4e13e2
+    Title: 'Debug: Asset Viewer'
+    Position: {x: 1261, y: 422}
+    NodeType: YY.Build.Graph.Nodes.ViewerNode
+    JsonData: '{}'
+  - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    Title: 'Export: Build AssetBundles'
+    Position: {x: 1360, y: -131}
+    NodeType: YY.Build.Graph.Nodes.BuildBundleNode
+    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
+  - NodeGUID: 091e4e65-3a65-421e-89e3-733e3f96e7e2
+    Title: 'Export: Copy Files'
+    Position: {x: 1518, y: 454}
+    NodeType: YY.Build.Graph.Nodes.BuildCopyNode
+    JsonData: '{"path":"StreamingRes/videos"}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output
@@ -169,3 +184,15 @@ MonoBehaviour:
     BasePortName: Output
     TargetNodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
     TargetPortName: Input
+  - BaseNodeGUID: 680a12f7-3ed2-4518-932a-35838d8a742d
+    BasePortName: Pass
+    TargetNodeGUID: 2312c170-c97d-4cb0-9d26-fb27369981ea
+    TargetPortName: Wait For
+  - BaseNodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
+    BasePortName: Pass
+    TargetNodeGUID: 2312c170-c97d-4cb0-9d26-fb27369981ea
+    TargetPortName: Wait For
+  - BaseNodeGUID: 091e4e65-3a65-421e-89e3-733e3f96e7e2
+    BasePortName: Pass
+    TargetNodeGUID: 2312c170-c97d-4cb0-9d26-fb27369981ea
+    TargetPortName: Wait For

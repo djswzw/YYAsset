@@ -14,6 +14,8 @@ namespace YY.Build
         // 可选：用于记录日志
         public System.Text.StringBuilder Logs = new System.Text.StringBuilder();
 
+        public bool IsBuildMode = false;
+
         public BuildContext() { }
     }
 }

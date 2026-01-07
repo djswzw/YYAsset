@@ -109,6 +109,9 @@ namespace YY.Build.Graph
                 evt.menu.AppendAction("Strategy/Grouper Node", action => CreateNode<GrouperNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Strategy/Deduplicator Node", action => CreateNode<DeduplicatorNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Build Bundle Node", action => CreateNode<BuildBundleNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Export/Build Zip Node", action => CreateNode<BuildZipNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Export/Build Copy Node", action => CreateNode<BuildCopyNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Export/Build Batch Node", action => CreateNode<BatchBuildNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Apply to Editor", action => CreateNode<ApplyToEditorNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("SubGraph/Input Port", action => CreateNode<SubGraphInputNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("SubGraph/Output Port", action => CreateNode<SubGraphOutputNode>(action.eventInfo.localMousePosition));

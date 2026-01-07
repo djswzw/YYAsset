@@ -31,7 +31,7 @@ namespace YY.Build.Graph.Nodes
             title = "Export: Build AssetBundles";
 
             AddInputPort("Input", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);
-
+            AddOutputPort("Pass", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);
             //初始化数据
             ParseOptionsToUI();
 
@@ -138,12 +138,7 @@ namespace YY.Build.Graph.Nodes
             var graphView = GetFirstAncestorOfType<UnityEditor.Experimental.GraphView.GraphView>();
             var allNodes = graphView.nodes.ToList().Cast<BaseBuildNode>().ToList();
 
-            var context = GraphRunner.Run(this, allNodes);
-
-            // 透传参数给 PipelineLauncher
-            bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, context.Assets, ManifestName);
-
-            //if (success) EditorUtility.RevealInFinder(OutputPath);
+            var context = GraphRunner.Run(this, allNodes,true);
         }
 
         // --- 逻辑辅助 ---
@@ -195,11 +190,22 @@ namespace YY.Build.Graph.Nodes
             }
         }
 
-        // 终点节点不需要传递数据，只记录日志
-        public override System.Collections.Generic.Dictionary<string, BuildContext> Execute(BuildContext context)
+        public override Dictionary<string, BuildContext> Execute(BuildContext context)
         {
-            context.Logs.AppendLine($"[BuildBundleNode] Ready to build. Opts: {BuildOptions}");
-            return base.Execute(context);
+            if (context.IsBuildMode)
+            {
+                context.Logs.AppendLine($"[BuildBundleNode] Building AssetBundles...");
+                bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, context.Assets, ManifestName);
+                if (success) context.Logs.AppendLine("  Build Success!");
+                else context.Logs.AppendLine("  Build Failed!");
+            }
+            else
+            {
+                context.Logs.AppendLine($"[BuildBundleNode] Ready to build. (Preview Mode)");
+            }
+
+            // 透传数据
+            return new Dictionary<string, BuildContext> { { "Pass", context } };
         }
     }
 }

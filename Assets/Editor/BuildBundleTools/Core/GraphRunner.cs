@@ -22,27 +22,25 @@ namespace YY.Build.Core
         }
 
         // Editor 模式入口
-        public static BuildContext Run(BaseBuildNode startNode, List<BaseBuildNode> allNodes)
+        public static BuildContext Run(BaseBuildNode startNode, List<BaseBuildNode> allNodes, bool isBuildMode = false)
         {
-            // 每次全新的 Run 清空栈（防止残留）
             _dataMapStack.Clear();
-
             foreach (var node in allNodes) PrepareConnectionsFromUI(node);
             LinkPortals(allNodes);
-            return RunInternal(startNode);
+            return RunInternal(startNode, isBuildMode);
         }
 
+
         // Headless 模式入口
-        public static BuildContext RunHeadless(BaseBuildNode startNode)
+        public static BuildContext RunHeadless(BaseBuildNode startNode, bool isBuildMode = true)
         {
-            // Headless 模式下可能已经在递归中了，所以不要 Clear Stack
-            return RunInternal(startNode);
+            // Headless 默认就是为了打包，所以默认为 true
+            return RunInternal(startNode, isBuildMode);
         }
 
         // 通用执行逻辑
-        private static BuildContext RunInternal(BaseBuildNode startNode)
+        private static BuildContext RunInternal(BaseBuildNode startNode, bool isBuildMode)
         {
-            // 【核心修复】进入新的一层执行，压入一个新的字典
             _dataMapStack.Push(new Dictionary<string, Dictionary<string, BuildContext>>());
 
             try
@@ -72,7 +70,7 @@ namespace YY.Build.Core
                             }
                         }
                     }
-
+                    inputContext.IsBuildMode = isBuildMode;
                     // 2. 执行节点
                     var outputs = node.Execute(inputContext);
 
@@ -101,7 +99,6 @@ namespace YY.Build.Core
             }
             finally
             {
-                // 【核心修复】执行完毕，弹出这一层的字典，恢复上一层的数据
                 _dataMapStack.Pop();
             }
         }
