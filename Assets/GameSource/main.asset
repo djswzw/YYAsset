@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1dc0094b4f914d4f90ced5a5885a636, type: 3}
-  m_Name: my
+  m_Name: main
   m_EditorClassIdentifier: Assembly-CSharp-Editor::YY.Build.Data.BuildGraphAsset
   Nodes:
   - NodeGUID: 6905e626-0f85-40af-8db3-792c82d6815d
@@ -18,11 +18,6 @@ MonoBehaviour:
     Position: {x: 1360, y: -131}
     NodeType: YY.Build.Graph.Nodes.BuildBundleNode
     JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
-  - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
-    Title: 'Editor: Set Bundle Names'
-    Position: {x: 1374, y: 183}
-    NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
-    JsonData: '{}'
   - NodeGUID: 419a3348-4191-4594-9068-5cfa3c6d9998
     Title: gameassetFilter
     Position: {x: -110, y: -39}
@@ -77,16 +72,26 @@ MonoBehaviour:
     Position: {x: 647, y: 6}
     NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
     JsonData: '{"recursive":false}'
-  - NodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
-    Title: Portal (Sender)
-    Position: {x: 859, y: 407}
-    NodeType: YY.Build.Graph.Nodes.PortalSenderNode
-    JsonData: '{"id":"gameAssets"}'
   - NodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
     Title: uidep
     Position: {x: 626, y: 202}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":0,"key":"Bundle Name:","suffix":".b"}'
+  - NodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
+    Title: 'Container: Sub-Graph'
+    Position: {x: 292, y: 521}
+    NodeType: YY.Build.Graph.Nodes.SubGraphNode
+    JsonData: '{"assetGuid":"a291d273d3df3c74e97ddf98f9200c3b"}'
+  - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
+    Title: 'Editor: Set Bundle Names'
+    Position: {x: 1374, y: 183}
+    NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
+    JsonData: '{}'
+  - NodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
+    Title: Portal (Sender)
+    Position: {x: 859, y: 407}
+    NodeType: YY.Build.Graph.Nodes.PortalSenderNode
+    JsonData: '{"id":"gameAssets"}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output
@@ -159,4 +164,8 @@ MonoBehaviour:
   - BaseNodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
     BasePortName: Output
     TargetNodeGUID: cfb4c3d6-deb8-4e10-b283-952d3b4e13e2
+    TargetPortName: Input
+  - BaseNodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
+    BasePortName: Output
+    TargetNodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
     TargetPortName: Input

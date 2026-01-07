@@ -2,7 +2,6 @@
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using YY.Build.Data;
 
 namespace YY.Build.Graph.Nodes
 {

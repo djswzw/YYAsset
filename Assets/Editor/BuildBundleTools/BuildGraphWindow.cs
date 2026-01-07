@@ -36,8 +36,14 @@ namespace YY.Build.Graph
         public static void Open(BuildGraphAsset asset)
         {
             var window = GetWindow<BuildGraphWindow>("Build Pipeline Graph");
+
+            if (window._currentAsset != null && window._currentAsset != asset)
+            {
+                window.SaveGraph("Switch Graph Asset");
+            }
             window._currentAsset = asset;
             window.LoadGraph();
+            window.Focus();
         }
 
         private void OnEnable()
@@ -104,6 +110,9 @@ namespace YY.Build.Graph
                 evt.menu.AppendAction("Strategy/Deduplicator Node", action => CreateNode<DeduplicatorNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Build Bundle Node", action => CreateNode<BuildBundleNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Apply to Editor", action => CreateNode<ApplyToEditorNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("SubGraph/Input Port", action => CreateNode<SubGraphInputNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("SubGraph/Output Port", action => CreateNode<SubGraphOutputNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("SubGraph/Container Node", action => CreateNode<SubGraphNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Debug/Asset List Viewer", action => CreateNode<ViewerNode>(action.eventInfo.localMousePosition));
             });
             _graphView.AddManipulator(menu);

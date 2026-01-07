@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1dc0094b4f914d4f90ced5a5885a636, type: 3}
+  m_Name: shader
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::YY.Build.Data.BuildGraphAsset
+  Nodes:
+  - NodeGUID: bbbb4f36-5ec4-4ecb-8cae-d78d2f826c60
+    Title: Advanced Filter
+    Position: {x: 349, y: 237}
+    NodeType: YY.Build.Graph.Nodes.FilterNode
+    JsonData: '{"rules":[{"IsEnabled":true,"Type":0,"Keyword":".shader","PortName":"Rule
+      1"}]}'
+  - NodeGUID: cc4eb698-3846-4fa5-9a34-ec782eb6b7e5
+    Title: 'Strategy: Grouper'
+    Position: {x: 619, y: 292}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":0,"key":"shaders","suffix":".b"}'
+  - NodeGUID: 59668a64-982f-4d00-aea7-c8eeccdf2e53
+    Title: 'SubGraph: Output'
+    Position: {x: 910, y: 400}
+    NodeType: YY.Build.Graph.Nodes.SubGraphOutputNode
+    JsonData: '{}'
+  - NodeGUID: a60040f8-b1d4-425f-83a8-0d173585d159
+    Title: 'Source: Directory'
+    Position: {x: 74, y: 190}
+    NodeType: YY.Build.Graph.Nodes.DirectoryNode
+    JsonData: '{"path":"Assets/GameSource/Shaders"}'
+  Edges:
+  - BaseNodeGUID: a60040f8-b1d4-425f-83a8-0d173585d159
+    BasePortName: Output
+    TargetNodeGUID: bbbb4f36-5ec4-4ecb-8cae-d78d2f826c60
+    TargetPortName: Input
+  - BaseNodeGUID: bbbb4f36-5ec4-4ecb-8cae-d78d2f826c60
+    BasePortName: Rule 1
+    TargetNodeGUID: cc4eb698-3846-4fa5-9a34-ec782eb6b7e5
+    TargetPortName: Input
+  - BaseNodeGUID: cc4eb698-3846-4fa5-9a34-ec782eb6b7e5
+    BasePortName: Output
+    TargetNodeGUID: 59668a64-982f-4d00-aea7-c8eeccdf2e53
+    TargetPortName: Input

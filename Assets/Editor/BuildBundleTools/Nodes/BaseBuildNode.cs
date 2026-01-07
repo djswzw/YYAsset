@@ -17,8 +17,8 @@ namespace YY.Build.Graph
 
         public BaseBuildNode()
         {
-            GUID = System.Guid.NewGuid().ToString();
-            styleSheets.Add(UnityEngine.Resources.Load<StyleSheet>("BuildGraphStyles"));
+            GUID = Guid.NewGuid().ToString();
+            styleSheets.Add(Resources.Load<StyleSheet>("BuildGraphStyles"));
             capabilities |= Capabilities.Renamable;
         }
 
@@ -126,9 +126,10 @@ namespace YY.Build.Graph
             {
                 foreach (var (upstreamNode, upstreamPort) in connections)
                 {
-                    // 从 GraphRunner 的全局缓存中取数据
-                    if (YY.Build.Core.GraphRunner.DataMap != null &&
-                        YY.Build.Core.GraphRunner.DataMap.TryGetValue(upstreamNode.GUID, out var nodeOutputs) &&
+                    var map = YY.Build.Core.GraphRunner.CurrentDataMap;
+
+                    if (map != null &&
+                        map.TryGetValue(upstreamNode.GUID, out var nodeOutputs) &&
                         nodeOutputs.TryGetValue(upstreamPort, out var data))
                     {
                         context.Assets.AddRange(data.Assets);

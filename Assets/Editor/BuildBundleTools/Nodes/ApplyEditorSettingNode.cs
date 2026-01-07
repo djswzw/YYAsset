@@ -4,7 +4,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using YY.Build.Core;
-using YY.Build.Data;
 
 namespace YY.Build.Graph.Nodes
 {

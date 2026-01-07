@@ -4,7 +4,6 @@ using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using YY.Build.Data;
 
 namespace YY.Build.Graph.Nodes
 {
@@ -123,7 +122,6 @@ namespace YY.Build.Graph.Nodes
 
         // --- 辅助方法：获取每一路输入的数据 ---
         // 我们需要修改 BaseBuildNode 来支持这个，或者在这里通过反射/Hardcode 获取
-        // 为了架构整洁，建议在 BaseBuildNode 增加一个 GetUpstreamDataSources 方法
         private List<List<AssetBuildInfo>> GetUpstreamGroups(string portName)
         {
             var groups = new List<List<AssetBuildInfo>>();
@@ -136,9 +134,10 @@ namespace YY.Build.Graph.Nodes
             {
                 var upstreamNode = edge.output.node as BaseBuildNode;
                 var upstreamPort = edge.output.portName;
+                var map = YY.Build.Core.GraphRunner.CurrentDataMap;
 
-                if (YY.Build.Core.GraphRunner.DataMap != null &&
-                    YY.Build.Core.GraphRunner.DataMap.TryGetValue(upstreamNode.GUID, out var nodeOutputs) &&
+                if (map != null &&
+                    map.TryGetValue(upstreamNode.GUID, out var nodeOutputs) &&
                     nodeOutputs.TryGetValue(upstreamPort, out var data))
                 {
                     // 每一根线的数据，作为一个独立的 List 加入
