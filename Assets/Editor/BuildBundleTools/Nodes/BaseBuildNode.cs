@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Experimental.GraphView;
+using UnityEngine;
 using UnityEngine.UIElements;
-using YY.Build.Data;
 
 namespace YY.Build.Graph
 {
@@ -19,11 +19,79 @@ namespace YY.Build.Graph
         {
             GUID = System.Guid.NewGuid().ToString();
             styleSheets.Add(UnityEngine.Resources.Load<StyleSheet>("BuildGraphStyles"));
-            // 开启重命名
             capabilities |= Capabilities.Renamable;
         }
 
-        public virtual void Initialize() { }
+        public virtual void Initialize()
+        {
+            var titleLabel = titleContainer.Q<Label>("title-label");
+
+            // 2. 注册鼠标点击事件到标题栏
+            titleContainer.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                // 检测双击 (左键 + clickCount=2)
+                if (evt.button == 0 && evt.clickCount == 2)
+                {
+                    OpenRenameTextField();
+                    evt.StopPropagation();
+                    focusController.IgnoreEvent(evt);
+                }
+            });
+        }
+        private void OpenRenameTextField()
+        {
+            // 1. 创建临时输入框
+            var textField = new TextField();
+            textField.value = title;
+            textField.style.position = Position.Absolute;
+            textField.style.left = 0;
+            textField.style.top = 0;
+            textField.style.right = 0;
+            textField.style.height = titleContainer.layout.height; // 盖住原标题
+            textField.style.fontSize = 12;
+            textField.style.marginLeft = 5;
+            textField.style.marginRight = 5;
+
+            // 样式调整：让它看起来像原生输入框
+            textField.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f);
+
+            // 2. 添加到 titleContainer
+            titleContainer.Add(textField);
+
+            // 3. 聚焦并全选
+            textField.Focus();
+            // 注意：SelectAll 需要在下一帧执行，否则可能无效
+            textField.schedule.Execute(() => textField.SelectAll());
+
+            // 4. 定义完成逻辑
+            void SaveAndClose()
+            {
+                if (!string.IsNullOrEmpty(textField.value) && textField.value != title)
+                {
+                    title = textField.value;
+                    NotifyChange(); // 触发 Undo 保存
+                }
+                titleContainer.Remove(textField); // 销毁输入框
+            }
+
+            // 5. 注册提交和取消事件
+            textField.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+                {
+                    SaveAndClose();
+                    evt.StopPropagation();
+                }
+                else if (evt.keyCode == KeyCode.Escape)
+                {
+                    titleContainer.Remove(textField); // 取消
+                    evt.StopPropagation();
+                }
+            });
+
+            // 失去焦点时自动保存
+            textField.RegisterCallback<FocusOutEvent>(evt => SaveAndClose());
+        }
 
         // --- 核心执行逻辑 ---
         public virtual Dictionary<string, BuildContext> Execute(BuildContext context)

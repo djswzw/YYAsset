@@ -14,6 +14,7 @@ namespace YY.Build.Graph.Nodes
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Portal (Sender)";
 
             // 只有输入，没有输出（视觉上）
@@ -49,11 +50,12 @@ namespace YY.Build.Graph.Nodes
     // --- 接收端 ---
     public class PortalReceiverNode : BaseBuildNode
     {
-        public string PortalID = "Global_Atlas";
+        public string PortalID = "Global_Assets";
         private TextField _idField;
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Portal (Receiver)";
 
             // 只有输出，没有输入（视觉上）

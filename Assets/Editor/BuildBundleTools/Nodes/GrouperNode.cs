@@ -19,6 +19,7 @@ namespace YY.Build.Graph.Nodes
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Strategy: Grouper";
             AddInputPort("Input");
             AddOutputPort("Output", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);

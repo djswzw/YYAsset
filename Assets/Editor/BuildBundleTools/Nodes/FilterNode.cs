@@ -1,13 +1,19 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView; // 必须引用
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace YY.Build.Graph.Nodes
 {
-    // FilterType 和 FilterRule 类保持不变...
-    public enum FilterType { Extension, PathRegex, FileStartWith }
+    public enum FilterType
+    {
+        Extension,          // 后缀名 (.prefab)
+        DirectoryStartsWith,// 目录开头 (Assets/Res/UI/)
+        PathRegex,          // 正则
+        FileStartWith       // 文件名开头
+    }
 
     [System.Serializable]
     public class FilterRule
@@ -27,6 +33,8 @@ namespace YY.Build.Graph.Nodes
         public override void Initialize()
         {
             title = "Advanced Filter";
+            base.Initialize();
+            // 端口
             AddInputPort("Input", Port.Capacity.Multi);
             DrawUI();
             RefreshDynamicPorts();
@@ -37,9 +45,11 @@ namespace YY.Build.Graph.Nodes
             if (_uiContainer != null) mainContainer.Remove(_uiContainer);
             _uiContainer = new VisualElement { style = { backgroundColor = new Color(0.25f, 0.25f, 0.25f), paddingTop = 5, paddingBottom = 5 } };
 
+            // 添加按钮
             var addBtn = new Button(() =>
             {
-                Rules.Add(new FilterRule { PortName = $"Rule {Rules.Count + 1}", Keyword = ".prefab" });
+                // 默认添加一个目录规则
+                Rules.Add(new FilterRule { PortName = $"Rule {Rules.Count + 1}", Type = FilterType.DirectoryStartsWith, Keyword = "Assets/" });
                 RefreshDynamicPorts();
                 DrawUI();
                 NotifyChange();
@@ -47,21 +57,86 @@ namespace YY.Build.Graph.Nodes
             { text = "+ Add Rule" };
             _uiContainer.Add(addBtn);
 
+            // 绘制每一行规则
             for (int i = 0; i < Rules.Count; i++)
             {
                 int index = i;
                 var rule = Rules[i];
-                var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginBottom = 2 } };
+                var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginBottom = 2, alignItems = Align.Center } };
 
-                var toggle = new Toggle { value = rule.IsEnabled };
+                // 1. 开关
+                var toggle = new Toggle { value = rule.IsEnabled, style = { width = 15 } };
                 toggle.RegisterValueChangedCallback(e => { rule.IsEnabled = e.newValue; NotifyChange(); });
 
-                var typeField = new EnumField(rule.Type) { style = { width = 80 } };
-                typeField.RegisterValueChangedCallback(e => { rule.Type = (FilterType)e.newValue; NotifyChange(); });
+                // 2. 类型下拉框
+                var typeField = new EnumField(rule.Type) { style = { width = 85, marginRight = 2 } };
+                typeField.RegisterValueChangedCallback(e =>
+                {
+                    rule.Type = (FilterType)e.newValue;
+                    // 类型改变时，如果是 Directory 且关键字为空，给个默认值
+                    if (rule.Type == FilterType.DirectoryStartsWith && string.IsNullOrEmpty(rule.Keyword)) rule.Keyword = "Assets/";
+                    DrawUI(); // 重绘本行以切换输入控件
+                    NotifyChange();
+                });
 
-                var kwField = new TextField { value = rule.Keyword, style = { flexGrow = 1 } };
+                // 3. 动态输入区域 (核心优化)
+                VisualElement inputContainer = new VisualElement { style = { flexGrow = 1, flexDirection = FlexDirection.Row } };
+
+                TextField kwField = new TextField { value = rule.Keyword, style = { flexGrow = 1 } };
                 kwField.RegisterValueChangedCallback(e => { rule.Keyword = e.newValue; NotifyChange(); });
 
+                // 如果是目录模式，增加“浏览”和“拖拽”功能
+                if (rule.Type == FilterType.DirectoryStartsWith)
+                {
+                    // 启用拖拽支持
+                    kwField.RegisterCallback<DragUpdatedEvent>(evt =>
+                    {
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Link;
+                    });
+                    kwField.RegisterCallback<DragPerformEvent>(evt =>
+                    {
+                        DragAndDrop.AcceptDrag();
+                        if (DragAndDrop.paths.Length > 0)
+                        {
+                            string path = DragAndDrop.paths[0]; // 获取拖入的路径
+                            if (System.IO.Directory.Exists(path)) // 确保是文件夹
+                            {
+                                rule.Keyword = path + "/"; // 自动补齐末尾斜杠
+                                kwField.value = rule.Keyword;
+                                NotifyChange();
+                            }
+                        }
+                    });
+                    // 样式提示
+                    kwField.tooltip = "Drag a folder here";
+
+                    // 浏览按钮
+                    var browseBtn = new Button(() =>
+                    {
+                        string path = EditorUtility.OpenFolderPanel("Select Folder", "Assets", "");
+                        if (!string.IsNullOrEmpty(path))
+                        {
+                            int idx = path.IndexOf("Assets");
+                            if (idx >= 0)
+                            {
+                                rule.Keyword = path.Substring(idx) + "/";
+                                kwField.value = rule.Keyword;
+                                NotifyChange();
+                            }
+                        }
+                    })
+                    { text = "...", style = { width = 20 } };
+
+                    inputContainer.Add(kwField);
+                    inputContainer.Add(browseBtn);
+                }
+                else
+                {
+                    // 普通文本模式
+                    inputContainer.Add(kwField);
+                }
+
+                // 4. 删除按钮
                 var delBtn = new Button(() =>
                 {
                     Rules.RemoveAt(index);
@@ -69,65 +144,40 @@ namespace YY.Build.Graph.Nodes
                     DrawUI();
                     NotifyChange();
                 })
-                { text = "X", style = { color = Color.red } };
+                { text = "X", style = { color = Color.red, width = 20 } };
 
                 row.Add(toggle);
                 row.Add(typeField);
-                row.Add(kwField);
+                row.Add(inputContainer); // 加入动态容器
                 row.Add(delBtn);
                 _uiContainer.Add(row);
             }
             mainContainer.Add(_uiContainer);
         }
 
-        // --- 【关键修复】刷新端口并保持连线 ---
         private void RefreshDynamicPorts()
         {
-            // 1. 记录现有的连接信息
-            // 结构: (本节点端口名, 目标端口对象)
-            var connectionsToRestore = new List<(string OutPortName, Port TargetPort)>();
-
+            // 记录连接并恢复 (保持之前的逻辑)
+            var connectionsToRestore = new List<(string, Port)>();
             foreach (var element in outputContainer.Children())
             {
                 if (element is Port port && port.connected)
-                {
-                    foreach (var edge in port.connections)
-                    {
-                        if (edge.input != null)
-                        {
-                            connectionsToRestore.Add((port.portName, edge.input));
-                        }
-                    }
-                }
+                    foreach (var edge in port.connections) if (edge.input != null) connectionsToRestore.Add((port.portName, edge.input));
             }
 
-            // 2. 清除旧端口 (BaseBuildNode 中的方法会物理断开 Edge)
             ClearOutputPorts();
 
-            // 3. 生成新端口
-            foreach (var rule in Rules)
-            {
-                if (rule.IsEnabled) AddOutputPort(rule.PortName, Port.Capacity.Multi);
-            }
+            foreach (var rule in Rules) if (rule.IsEnabled) AddOutputPort(rule.PortName, Port.Capacity.Multi);
             AddOutputPort(kDefaultPort, Port.Capacity.Multi);
 
-            // 4. 恢复连接
-            var graphView = GetFirstAncestorOfType<GraphView>();
-
+            var graphView = GetFirstAncestorOfType<UnityEditor.Experimental.GraphView.GraphView>();
             if (graphView != null)
             {
                 foreach (var record in connectionsToRestore)
                 {
-                    // 在新生成的端口中查找同名的
-                    var newOutPort = outputContainer.Q<Port>(record.OutPortName);
-                    var targetInPort = record.TargetPort;
-
-                    // 只有当双方都存在且有效时才重连
-                    if (newOutPort != null && targetInPort != null && targetInPort.node != null)
-                    {
-                        var newEdge = newOutPort.ConnectTo(targetInPort);
-                        graphView.AddElement(newEdge);
-                    }
+                    var newOutPort = outputContainer.Q<Port>(record.Item1);
+                    if (newOutPort != null && record.Item2 != null && record.Item2.node != null)
+                        graphView.AddElement(newOutPort.ConnectTo(record.Item2));
                 }
             }
         }
@@ -159,17 +209,31 @@ namespace YY.Build.Graph.Nodes
 
         private bool CheckMatch(string path, FilterRule rule)
         {
-            string name = System.IO.Path.GetFileName(path);
+            // 统一路径分隔符，确保 StartsWith 匹配准确
+            path = path.Replace("\\", "/");
+
             switch (rule.Type)
             {
-                case FilterType.Extension: return path.EndsWith(rule.Keyword, System.StringComparison.OrdinalIgnoreCase);
-                case FilterType.FileStartWith: return name.StartsWith(rule.Keyword, System.StringComparison.OrdinalIgnoreCase);
-                case FilterType.PathRegex: return System.Text.RegularExpressions.Regex.IsMatch(path, rule.Keyword);
+                case FilterType.Extension:
+                    return path.EndsWith(rule.Keyword, System.StringComparison.OrdinalIgnoreCase);
+
+                case FilterType.DirectoryStartsWith:
+                    // 核心优化：直接字符串匹配，性能极快
+                    // 确保 Keyword 也是标准路径格式
+                    string keyword = rule.Keyword.Replace("\\", "/");
+                    return path.StartsWith(keyword, System.StringComparison.OrdinalIgnoreCase);
+
+                case FilterType.FileStartWith:
+                    return System.IO.Path.GetFileName(path).StartsWith(rule.Keyword, System.StringComparison.OrdinalIgnoreCase);
+
+                case FilterType.PathRegex:
+                    return Regex.IsMatch(path, rule.Keyword);
+
                 default: return false;
             }
         }
 
-        // --- 序列化 ---
+        // 序列化
         [System.Serializable] class NodeData { public List<FilterRule> rules; }
         public override string SaveToJSON() => JsonUtility.ToJson(new NodeData { rules = Rules });
         public override void LoadFromJSON(string json)

@@ -104,6 +104,7 @@ namespace YY.Build.Graph
                 evt.menu.AppendAction("Strategy/Deduplicator Node", action => CreateNode<DeduplicatorNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Build Bundle Node", action => CreateNode<BuildBundleNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Export/Apply to Editor", action => CreateNode<ApplyToEditorNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Debug/Asset List Viewer", action => CreateNode<ViewerNode>(action.eventInfo.localMousePosition));
             });
             _graphView.AddManipulator(menu);
         }

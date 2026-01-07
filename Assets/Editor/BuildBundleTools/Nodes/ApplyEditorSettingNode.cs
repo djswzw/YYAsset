@@ -12,6 +12,7 @@ namespace YY.Build.Graph.Nodes
     {
         public override void Initialize()
         {
+            base.Initialize();
             title = "Editor: Set Bundle Names";
 
             // 允许连接多个上游节点

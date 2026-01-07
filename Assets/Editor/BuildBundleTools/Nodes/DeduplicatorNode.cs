@@ -17,6 +17,7 @@ namespace YY.Build.Graph.Nodes
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Process: Deduplicator";
 
             // --- 输入 ---

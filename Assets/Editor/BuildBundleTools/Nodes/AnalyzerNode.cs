@@ -15,6 +15,7 @@ namespace YY.Build.Graph.Nodes
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Analysis: Auto Common";
 
             // 允许多路输入，每一路代表一个独立的“资源组”

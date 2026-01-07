@@ -7,6 +7,7 @@ namespace YY.Build.Graph.Nodes
     {
         public override void Initialize()
         {
+            base.Initialize();
             title = "Process: Merge";
 
             // 允许多个输入汇聚

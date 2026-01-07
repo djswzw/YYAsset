@@ -21,6 +21,7 @@ namespace YY.Build.Graph.Nodes
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Process: Dependency";
 
             // 端口定义

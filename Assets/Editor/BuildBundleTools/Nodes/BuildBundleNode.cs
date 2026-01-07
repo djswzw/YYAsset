@@ -27,6 +27,7 @@ namespace YY.Build.Graph.Nodes
 
         public override void Initialize()
         {
+            base.Initialize();
             title = "Export: Build AssetBundles";
 
             AddInputPort("Input", UnityEditor.Experimental.GraphView.Port.Capacity.Multi);
