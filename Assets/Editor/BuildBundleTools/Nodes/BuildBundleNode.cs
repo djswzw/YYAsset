@@ -195,8 +195,33 @@ namespace YY.Build.Graph.Nodes
             if (context.IsBuildMode)
             {
                 context.Logs.AppendLine($"[BuildBundleNode] Building AssetBundles...");
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, context.Assets, ManifestName);
-                if (success) context.Logs.AppendLine("  Build Success!");
+                watch.Stop();
+                long totalSize = 0;
+                if (success && System.IO.Directory.Exists(OutputPath))
+                {
+                    var files = System.IO.Directory.GetFiles(OutputPath, "*", System.IO.SearchOption.AllDirectories);
+                    foreach (var f in files)
+                    {
+                        // 排除 .manifest 文本文件，只统计二进制
+                        if (!f.EndsWith(".manifest"))
+                            totalSize += new System.IO.FileInfo(f).Length;
+                    }
+                }
+                context.Reports.Add(new BuildReportItem
+                {
+                    NodeTitle = title,
+                    Category = "AssetBundle",
+                    OutputPath = OutputPath,
+                    AssetCount = context.Assets.Count,
+                    OutputSizeBytes = totalSize,
+                    DurationSeconds = watch.Elapsed.TotalSeconds,
+                    IsSuccess = success,
+                    Message = success ? "OK" : "PipelineLauncher Failed"
+                });
+
+                if (success) context.Logs.AppendLine($"  Build Success! Size: {EditorUtility.FormatBytes(totalSize)}");
                 else context.Logs.AppendLine("  Build Failed!");
             }
             else

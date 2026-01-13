@@ -71,20 +71,36 @@ namespace YY.Build.Graph.Nodes
 
             if (context.IsBuildMode)
             {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 if (!Directory.Exists(OutputPath)) Directory.CreateDirectory(OutputPath);
 
+                long totalSize = 0;
                 foreach (var asset in context.Assets)
                 {
                     string src = Path.GetFullPath(asset.AssetPath);
-                    string dest = Path.Combine(OutputPath, Path.GetFileName(asset.AssetPath)); // 扁平化拷贝
+                    string dest = Path.Combine(OutputPath, Path.GetFileName(asset.AssetPath));
 
                     if (File.Exists(src))
                     {
                         File.Copy(src, dest, true);
+                        totalSize += new FileInfo(dest).Length;
                     }
                 }
-                context.Logs.AppendLine($"[BuildCopyNode] Copied files to {OutputPath}");
-                Debug.Log($"[BuildCopyNode] Copy Success: {OutputPath}");
+                watch.Stop();
+
+                context.Reports.Add(new BuildReportItem
+                {
+                    NodeTitle = title,
+                    Category = "Raw Copy",
+                    OutputPath = OutputPath,
+                    AssetCount = context.Assets.Count,
+                    OutputSizeBytes = totalSize,
+                    DurationSeconds = watch.Elapsed.TotalSeconds,
+                    IsSuccess = true,
+                    Message = "OK"
+                });
+
+                context.Logs.AppendLine($"[BuildCopyNode] Copied. Size: {EditorUtility.FormatBytes(totalSize)}");
             }
             else
             {

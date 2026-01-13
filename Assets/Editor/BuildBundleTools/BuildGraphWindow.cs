@@ -117,6 +117,7 @@ namespace YY.Build.Graph
                 evt.menu.AppendAction("SubGraph/Output Port", action => CreateNode<SubGraphOutputNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("SubGraph/Container Node", action => CreateNode<SubGraphNode>(action.eventInfo.localMousePosition));
                 evt.menu.AppendAction("Debug/Asset List Viewer", action => CreateNode<ViewerNode>(action.eventInfo.localMousePosition));
+                evt.menu.AppendAction("Debug/RedundancyCheck Node", action => CreateNode<RedundancyCheckNode>(action.eventInfo.localMousePosition));
             });
             _graphView.AddManipulator(menu);
         }

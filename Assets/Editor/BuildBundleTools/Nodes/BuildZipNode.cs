@@ -89,8 +89,32 @@ namespace YY.Build.Graph.Nodes
             if (context.IsBuildMode)
             {
                 context.Logs.AppendLine($"[BuildZipNode] Zipping...");
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+
                 bool success = ZipBuilder.CreateZip(OutputPath, ZipFileName, context.Assets, Password);
-                if (success) context.Logs.AppendLine("  Zip Success!");
+
+                watch.Stop();
+
+                long size = 0;
+                string fullPath = System.IO.Path.Combine(OutputPath, ZipFileName);
+                if (success && System.IO.File.Exists(fullPath))
+                {
+                    size = new System.IO.FileInfo(fullPath).Length;
+                }
+
+                context.Reports.Add(new BuildReportItem
+                {
+                    NodeTitle = title,
+                    Category = "Zip Archive",
+                    OutputPath = fullPath,
+                    AssetCount = context.Assets.Count,
+                    OutputSizeBytes = size,
+                    DurationSeconds = watch.Elapsed.TotalSeconds,
+                    IsSuccess = success,
+                    Message = success ? "OK" : "Zip Create Failed"
+                });
+
+                if (success) context.Logs.AppendLine($"  Zip Success! Size: {EditorUtility.FormatBytes(size)}");
             }
             else
             {
