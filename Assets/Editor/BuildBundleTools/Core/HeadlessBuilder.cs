@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -11,12 +12,19 @@ namespace YY.Build.Core
 {
     public static class HeadlessBuilder
     {
+        // EditorPrefs键名，与FileUtils和MenuToolsUtils保持一致
+        private const string kBundleUrlKey = "bundleurl";
+        private const string kBundleUrlAndroid = "android";
+        private const string kBundleUrlIos = "ios";
+
         /// <summary>
         /// 自动化打包入口
         /// </summary>
         /// <param name="graphAssetPath">Graph 资产路径</param>
         /// <param name="targetNodeName">要执行的打包节点名称 (支持模糊匹配，默认查找BatchBuildNode)</param>
-        public static void Build(string graphAssetPath, string targetNodeName = "Batch")
+        /// <param name="copyToLoadPath">是否复制到编辑器加载路径 (StreamingRes/{platform}/)</param>
+        /// <param name="copyToStreamingAssets">是否复制到StreamingAssets (真机打包用)</param>
+        public static void Build(string graphAssetPath, string targetNodeName = "Batch", bool copyToLoadPath = false, bool copyToStreamingAssets = false)
         {
             // 1. 加载 Asset
             var graphAsset = AssetDatabase.LoadAssetAtPath<BuildGraphAsset>(graphAssetPath);
@@ -141,9 +149,13 @@ namespace YY.Build.Core
             var context = GraphRunner.RunHeadless(targetNode, true);
 
             // 7. 输出构建报告
+            bool hasSuccess = false;
+            List<string> outputPaths = new List<string>();
+            
             if (context != null)
             {
                 Debug.Log($"[HeadlessBuilder] Assets processed: {context.Assets.Count}");
+                Debug.Log($"[HeadlessBuilder] Reports count: {context.Reports.Count}");
                 if (context.Logs.Length > 0)
                 {
                     Debug.Log($"[HeadlessBuilder] Logs:\n{context.Logs}");
@@ -158,11 +170,13 @@ namespace YY.Build.Core
                         if (!string.IsNullOrEmpty(report.OutputPath))
                         {
                             Debug.Log($"    Output: {report.OutputPath}");
+                            outputPaths.Add(report.OutputPath);
                         }
                         if (report.AssetCount > 0)
                         {
                             Debug.Log($"    Assets: {report.AssetCount}, Size: {report.OutputSizeBytes} bytes");
                         }
+                        if (report.IsSuccess) hasSuccess = true;
                     }
                 }
                 else
@@ -176,6 +190,193 @@ namespace YY.Build.Core
             }
 
             Debug.Log(">>> Batch Build Finished <<<");
+
+            // 8. 构建后复制
+            if (copyToLoadPath || copyToStreamingAssets)
+            {
+                Debug.Log($"[HeadlessBuilder] Copy check: hasSuccess={hasSuccess}, outputPaths.Count={outputPaths.Count}");
+                
+                List<string> pathsToCopy = outputPaths;
+                if (!hasSuccess || outputPaths.Count == 0)
+                {
+                    // 从BuildBundleNode收集路径
+                    pathsToCopy = CollectOutputPathsFromNodes(nodeMap.Values.ToList());
+                }
+
+                if (pathsToCopy.Count > 0)
+                {
+                    if (copyToLoadPath)
+                    {
+                        CopyToLoadPath(pathsToCopy);
+                    }
+                    if (copyToStreamingAssets)
+                    {
+                        CopyToStreamingAssets(pathsToCopy);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 从BuildBundleNode节点收集输出路径
+        /// </summary>
+        private static List<string> CollectOutputPathsFromNodes(List<BaseBuildNode> nodes)
+        {
+            List<string> outputPaths = new List<string>();
+            var bundleNodes = nodes.OfType<BuildBundleNode>().ToList();
+            
+            foreach (var node in bundleNodes)
+            {
+                var outputPathField = typeof(BuildBundleNode).GetField("OutputPath", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (outputPathField != null)
+                {
+                    string outputPath = outputPathField.GetValue(node) as string;
+                    if (!string.IsNullOrEmpty(outputPath))
+                    {
+                        outputPaths.Add(outputPath);
+                        Debug.Log($"[HeadlessBuilder] 从BuildBundleNode收集路径: {outputPath}");
+                    }
+                }
+            }
+
+            return outputPaths;
+        }
+
+        /// <summary>
+        /// 将构建输出复制到StreamingAssets目录（真机打包用）
+        /// </summary>
+        private static void CopyToStreamingAssets(List<string> outputPaths)
+        {
+            string projectRoot = Application.dataPath.Replace("/Assets", "");
+            string targetDir = Path.Combine(Application.dataPath, "StreamingAssets", "assets");
+
+            Debug.Log($"[HeadlessBuilder] 开始复制资源到StreamingAssets: {targetDir}");
+
+            // 确保目标目录存在
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            int copiedFiles = 0;
+            long totalSize = 0;
+
+            foreach (var sourcePath in outputPaths)
+            {
+                string fullSourcePath = sourcePath;
+                if (!Path.IsPathRooted(sourcePath))
+                {
+                    fullSourcePath = Path.Combine(projectRoot, sourcePath);
+                }
+
+                if (!Directory.Exists(fullSourcePath))
+                {
+                    Debug.LogWarning($"[HeadlessBuilder] 源路径不存在，跳过: {fullSourcePath}");
+                    continue;
+                }
+
+                // 复制目录中的所有文件
+                var files = Directory.GetFiles(fullSourcePath, "*.*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    string relativePath = file.Substring(fullSourcePath.Length).TrimStart(Path.DirectorySeparatorChar);
+                    string targetFile = Path.Combine(targetDir, relativePath);
+
+                    string targetFileDir = Path.GetDirectoryName(targetFile);
+                    if (!Directory.Exists(targetFileDir))
+                    {
+                        Directory.CreateDirectory(targetFileDir);
+                    }
+
+                    File.Copy(file, targetFile, true);
+                    
+                    var fileInfo = new FileInfo(file);
+                    totalSize += fileInfo.Length;
+                    copiedFiles++;
+                }
+            }
+
+            AssetDatabase.Refresh();
+
+            Debug.Log($"[HeadlessBuilder] StreamingAssets复制完成: {copiedFiles} 个文件, 总大小: {EditorUtility.FormatBytes(totalSize)}");
+            Debug.Log($"[HeadlessBuilder] 资源已复制到: {targetDir}");
+        }
+
+        /// <summary>
+        /// 将构建输出复制到编辑器加载路径
+        /// </summary>
+        /// <param name="outputPaths">构建输出路径列表</param>
+        private static void CopyToLoadPath(List<string> outputPaths)
+        {
+            // 获取当前配置的加载路径
+            string bundleUrl = EditorPrefs.GetString(kBundleUrlKey, string.Empty);
+            
+            if (string.IsNullOrEmpty(bundleUrl))
+            {
+                Debug.Log("[HeadlessBuilder] 未配置平台路径(bundleurl)，跳过复制步骤。");
+                Debug.Log("[HeadlessBuilder] 提示：通过菜单 GameTools/AssetBundles/Android路径 或 iOS路径 设置加载路径。");
+                return;
+            }
+
+            // 计算目标路径：项目根目录/StreamingRes/{platform}/
+            string projectRoot = Application.dataPath.Replace("/Assets", "");
+            string targetDir = Path.Combine(projectRoot, "StreamingRes", bundleUrl);
+
+            Debug.Log($"[HeadlessBuilder] 开始复制资源到加载路径: {targetDir}");
+
+            // 确保目标目录存在
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            int copiedFiles = 0;
+            long totalSize = 0;
+
+            foreach (var sourcePath in outputPaths)
+            {
+                // sourcePath 可能是相对路径或绝对路径
+                string fullSourcePath = sourcePath;
+                if (!Path.IsPathRooted(sourcePath))
+                {
+                    fullSourcePath = Path.Combine(projectRoot, sourcePath);
+                }
+
+                if (!Directory.Exists(fullSourcePath))
+                {
+                    Debug.LogWarning($"[HeadlessBuilder] 源路径不存在，跳过: {fullSourcePath}");
+                    continue;
+                }
+
+                // 复制目录中的所有文件
+                var files = Directory.GetFiles(fullSourcePath, "*.*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    // 获取相对路径
+                    string relativePath = file.Substring(fullSourcePath.Length).TrimStart(Path.DirectorySeparatorChar);
+                    string targetFile = Path.Combine(targetDir, relativePath);
+
+                    // 确保目标目录存在
+                    string targetFileDir = Path.GetDirectoryName(targetFile);
+                    if (!Directory.Exists(targetFileDir))
+                    {
+                        Directory.CreateDirectory(targetFileDir);
+                    }
+
+                    // 复制文件（覆盖）
+                    File.Copy(file, targetFile, true);
+                    
+                    var fileInfo = new FileInfo(file);
+                    totalSize += fileInfo.Length;
+                    copiedFiles++;
+                }
+            }
+
+            // 刷新AssetDatabase
+            AssetDatabase.Refresh();
+
+            Debug.Log($"[HeadlessBuilder] 复制完成: {copiedFiles} 个文件, 总大小: {EditorUtility.FormatBytes(totalSize)}");
+            Debug.Log($"[HeadlessBuilder] 资源已复制到: {targetDir}");
         }
 
         /// <summary>
@@ -219,7 +420,7 @@ namespace YY.Build.Core
         public static void BuildWithDefaultConfig()
         {
             string path = EditorPrefs.GetString("BuildGraphPath", "Assets/NewBuildGraph.asset");
-            Build(path, "Batch");
+            Build(path, "Batch", copyToLoadPath: true, copyToStreamingAssets: false);
         }
     }
 }

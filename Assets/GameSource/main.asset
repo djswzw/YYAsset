@@ -66,12 +66,12 @@ MonoBehaviour:
     Title: 'Export: Build AssetBundles'
     Position: {x: 1360, y: -131}
     NodeType: YY.Build.Graph.Nodes.BuildBundleNode
-    JsonData: '{"outPath":"StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
+    JsonData: '{"outPath":"BuildCache","target":5,"options":256,"manifestName":"sys_manifest"}'
   - NodeGUID: 091e4e65-3a65-421e-89e3-733e3f96e7e2
     Title: 'Export: Copy Files'
     Position: {x: 1518, y: 454}
     NodeType: YY.Build.Graph.Nodes.BuildCopyNode
-    JsonData: '{"path":"StreamingRes/videos"}'
+    JsonData: '{"path":"BuildCache/videos"}'
   - NodeGUID: cfb4c3d6-deb8-4e10-b283-952d3b4e13e2
     Title: 'Debug: Asset Viewer'
     Position: {x: 1313, y: 418}
@@ -111,7 +111,7 @@ MonoBehaviour:
     Title: 'Export: Build Zip'
     Position: {x: 1692, y: -284}
     NodeType: YY.Build.Graph.Nodes.BuildZipNode
-    JsonData: '{"outPath":"StreamingRes/Scripts","zipName":"scripts.zip","pass":""}'
+    JsonData: '{"outPath":"BuildCache/Scripts","zipName":"scripts.zip","pass":""}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output
