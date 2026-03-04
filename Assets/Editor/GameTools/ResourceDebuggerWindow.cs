@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Build.Pipeline;
 using YY;
 
 public class ResourceDebuggerWindow : EditorWindow

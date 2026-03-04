@@ -82,7 +82,7 @@ namespace YY.Build.Graph.Nodes
             }
 
             // --- 阶段 2: 智能图集扩展 (Fix Atlas Redirection) ---
-            // 找到所有被显式打包的 .spriteatlas 文件
+            // 找到所有被显式打包的 .spriteatlasv2 文件
             var atlasPaths = explicitMap.Keys.Where(p => p.EndsWith(".spriteatlasv2", System.StringComparison.OrdinalIgnoreCase)).ToList();
             int packedSpriteCount = 0;
 

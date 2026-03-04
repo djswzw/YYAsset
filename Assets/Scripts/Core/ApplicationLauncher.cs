@@ -10,7 +10,7 @@ public class ApplicationLauncher : MonoBehaviour
 
         // 2. 初始化 BundleManager
         // 模拟模式下此步骤直接返回，真机模式下加载 Manifest
-        await BundleManager.InitializeAsync("android");
+        await BundleManager.InitializeAsync("sys_manifest");
 
         // 3. 加载场景
         await BundleManager.LoadSceneAsync("scenes/uiscene.b", "uiscene", true);

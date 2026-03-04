@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
 using System;
+using UnityEngine.Build.Pipeline;
 
 
 
@@ -17,7 +18,8 @@ namespace YY
     public static class BundleManager
     {
         private static IBundlePathProvider _pathProvider;
-        private static AssetBundleManifest _manifest;
+        // 使用 SBP 的 CompatibilityAssetBundleManifest 替代原生 AssetBundleManifest
+        private static CompatibilityAssetBundleManifest _manifest;
         private static Dictionary<string, BundleInfo> _loadedBundles = new Dictionary<string, BundleInfo>();
 
         // 任务去重 (Request Merging)
@@ -49,7 +51,10 @@ namespace YY
             }
         }
 #endif
-        public static AssetBundleManifest GetManifest() => _manifest;
+        /// <summary>
+        /// 获取 SBP 兼容的 Manifest 对象
+        /// </summary>
+        public static CompatibilityAssetBundleManifest GetManifest() => _manifest;
 
         public static async Task InitializeAsync(string manifestName, IBundlePathProvider provider = null)
         {
@@ -68,11 +73,17 @@ namespace YY
             var req = await AssetBundle.LoadFromFileAsync(_pathProvider.GetBundlePath(manifestName));
             if (req != null)
             {
-                _manifest = req.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                // 使用 SBP 的 CompatibilityAssetBundleManifest 类型
+                var strs = req.GetAllAssetNames();
+                _manifest = req.LoadAsset<CompatibilityAssetBundleManifest>(manifestName);
+                if (_manifest == null)
+                {
+                    Debug.LogError("[BundleManager] Failed to load CompatibilityAssetBundleManifest from bundle!");
+                }
             }
             else
             {
-                Debug.LogError("[BundleManager] Failed to load Manifest!");
+                Debug.LogError("[BundleManager] Failed to load Manifest Bundle!");
             }
         }
 

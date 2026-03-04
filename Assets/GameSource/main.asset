@@ -37,11 +37,6 @@ MonoBehaviour:
     Position: {x: 113, y: 348}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":2,"key":"textures/","suffix":".b"}'
-  - NodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
-    Title: 'Process: Merge'
-    Position: {x: 605, y: 407}
-    NodeType: YY.Build.Graph.Nodes.MergeNode
-    JsonData: '{}'
   - NodeGUID: cea3d150-0f6a-4709-841f-24176ae3cd9b
     Title: uidep
     Position: {x: 664, y: 220}
@@ -52,26 +47,11 @@ MonoBehaviour:
     Position: {x: 335, y: -57}
     NodeType: YY.Build.Graph.Nodes.GrouperNode
     JsonData: '{"mode":2,"key":"ui/","suffix":".b"}'
-  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
-    Title: scenegroup
-    Position: {x: 322, y: 118}
-    NodeType: YY.Build.Graph.Nodes.GrouperNode
-    JsonData: '{"mode":2,"key":"scene/","suffix":".b"}'
   - NodeGUID: 8edc13b1-a72c-40c8-8644-671507d87c54
     Title: 'Editor: Set Bundle Names'
     Position: {x: 1374, y: 183}
     NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
     JsonData: '{}'
-  - NodeGUID: 2312c170-c97d-4cb0-9d26-fb27369981ea
-    Title: 'Final: Batch Build'
-    Position: {x: 1921, y: 220}
-    NodeType: YY.Build.Graph.Nodes.BatchBuildNode
-    JsonData: '{}'
-  - NodeGUID: 680a12f7-3ed2-4518-932a-35838d8a742d
-    Title: 'Export: Build Zip'
-    Position: {x: 1692, y: -284}
-    NodeType: YY.Build.Graph.Nodes.BuildZipNode
-    JsonData: '{"outPath":"StreamingRes/Scripts","zipName":"scripts.zip","pass":""}'
   - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
     Title: deduplicator
     Position: {x: 647, y: 6}
@@ -86,7 +66,7 @@ MonoBehaviour:
     Title: 'Export: Build AssetBundles'
     Position: {x: 1360, y: -131}
     NodeType: YY.Build.Graph.Nodes.BuildBundleNode
-    JsonData: '{"outPath":"G:/111/test/YYAsset/StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
+    JsonData: '{"outPath":"StreamingRes","target":5,"options":256,"manifestName":"sys_manifest"}'
   - NodeGUID: 091e4e65-3a65-421e-89e3-733e3f96e7e2
     Title: 'Export: Copy Files'
     Position: {x: 1518, y: 454}
@@ -97,21 +77,41 @@ MonoBehaviour:
     Position: {x: 1313, y: 418}
     NodeType: YY.Build.Graph.Nodes.ViewerNode
     JsonData: '{}'
-  - NodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
-    Title: Portal (Sender)
-    Position: {x: 896, y: 386}
-    NodeType: YY.Build.Graph.Nodes.PortalSenderNode
-    JsonData: '{"id":"gameAssets"}'
-  - NodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
-    Title: 'Container: Sub-Graph'
-    Position: {x: 380, y: 529}
-    NodeType: YY.Build.Graph.Nodes.SubGraphNode
-    JsonData: '{"assetGuid":"a291d273d3df3c74e97ddf98f9200c3b"}'
   - NodeGUID: 5033364d-ee91-447b-be80-6ecf1b014639
     Title: 'QA: Redundancy Check'
     Position: {x: 1284, y: 596}
     NodeType: YY.Build.Graph.Nodes.RedundancyCheckNode
     JsonData: '{"error":false}'
+  - NodeGUID: 4e87bace-276c-4d72-a6d6-143cfd92d5bf
+    Title: 'Container: Sub-Graph'
+    Position: {x: 380, y: 529}
+    NodeType: YY.Build.Graph.Nodes.SubGraphNode
+    JsonData: '{"assetGuid":"a291d273d3df3c74e97ddf98f9200c3b"}'
+  - NodeGUID: 46144b95-0242-4056-8b5f-9423a64e8eee
+    Title: scenegroup
+    Position: {x: 322, y: 118}
+    NodeType: YY.Build.Graph.Nodes.GrouperNode
+    JsonData: '{"mode":2,"key":"scenes/","suffix":".b"}'
+  - NodeGUID: 0ec6baf9-680c-4c8e-b266-2946725b6f96
+    Title: Portal (Sender)
+    Position: {x: 896, y: 386}
+    NodeType: YY.Build.Graph.Nodes.PortalSenderNode
+    JsonData: '{"id":"gameAssets"}'
+  - NodeGUID: 270a7c8e-c380-4bba-89f1-93a47e59c5bf
+    Title: 'Process: Merge'
+    Position: {x: 604, y: 411}
+    NodeType: YY.Build.Graph.Nodes.MergeNode
+    JsonData: '{}'
+  - NodeGUID: 2312c170-c97d-4cb0-9d26-fb27369981ea
+    Title: 'Final: Batch Build'
+    Position: {x: 1937, y: 219}
+    NodeType: YY.Build.Graph.Nodes.BatchBuildNode
+    JsonData: '{}'
+  - NodeGUID: 680a12f7-3ed2-4518-932a-35838d8a742d
+    Title: 'Export: Build Zip'
+    Position: {x: 1692, y: -284}
+    NodeType: YY.Build.Graph.Nodes.BuildZipNode
+    JsonData: '{"outPath":"StreamingRes/Scripts","zipName":"scripts.zip","pass":""}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output

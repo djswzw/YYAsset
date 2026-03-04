@@ -58,7 +58,7 @@ namespace YY.Build.Core
             string tempDir = "Assets/YY_Build_Temp";
             if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
 
-            string tempAssetPath = $"{tempDir}/{bundleName}_raw.asset";
+            string tempAssetPath = $"{tempDir}/{bundleName}.asset";
 
             try
             {
@@ -69,6 +69,7 @@ namespace YY.Build.Core
                 var build = new AssetBundleBuild();
                 build.assetBundleName = bundleName; // 这里就是你要的无后缀文件名 (或加 .bundle，随你)
                 build.assetNames = new[] { tempAssetPath };
+                build.addressableNames = new[] { bundleName }; // 固定名称，运行时通过此名称加载
 
                 // D. 构造 SBP 参数
                 var buildParams = new BundleBuildParameters(target, BuildPipeline.GetBuildTargetGroup(target), outputPath);
