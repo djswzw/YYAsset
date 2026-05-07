@@ -52,11 +52,6 @@ MonoBehaviour:
     Position: {x: 1374, y: 183}
     NodeType: YY.Build.Graph.Nodes.ApplyToEditorNode
     JsonData: '{}'
-  - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
-    Title: deduplicator
-    Position: {x: 647, y: 6}
-    NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
-    JsonData: '{"recursive":false}'
   - NodeGUID: a168149e-975b-4ccc-991a-bef3e36fcdf4
     Title: Portal (Receiver)
     Position: {x: 1049, y: 96}
@@ -112,6 +107,11 @@ MonoBehaviour:
     Position: {x: 1692, y: -284}
     NodeType: YY.Build.Graph.Nodes.BuildZipNode
     JsonData: '{"outPath":"BuildCache/Scripts","zipName":"scripts.zip","pass":""}'
+  - NodeGUID: 0ffc403f-14c3-4d8c-9fd4-6cf5d4e219fe
+    Title: deduplicator
+    Position: {x: 647, y: 6}
+    NodeType: YY.Build.Graph.Nodes.DeduplicatorNode
+    JsonData: '{"recursive":false}'
   Edges:
   - BaseNodeGUID: 668bb1a5-f409-4a76-a760-46a73bd09e29
     BasePortName: Output

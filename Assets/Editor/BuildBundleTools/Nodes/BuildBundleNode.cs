@@ -196,7 +196,108 @@ namespace YY.Build.Graph.Nodes
             {
                 context.Logs.AppendLine($"[BuildBundleNode] Building AssetBundles...");
                 var watch = System.Diagnostics.Stopwatch.StartNew();
-                bool success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, context.Assets, ManifestName);
+
+                // 加载缓存
+                BuildCacheManager.Load();
+
+                // 检查平台变化
+                if (BuildCacheManager.Cache.BuildTarget != TargetPlatform.ToString())
+                {
+                    BuildCacheManager.MarkFullBuildRequired($"Build target changed");
+                    BuildCacheManager.Cache.BuildTarget = TargetPlatform.ToString();
+                }
+
+                // 按 Bundle 分组资源
+                var bundlesByGroup = context.Assets
+                    .Where(a => !string.IsNullOrEmpty(a.BundleName))
+                    .GroupBy(a => a.BundleName)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                // 检测变化的 Bundle
+                var changedBundles = new HashSet<string>();
+                foreach (var kvp in bundlesByGroup)
+                {
+                    var bundleName = kvp.Key;
+                    var assets = kvp.Value;
+
+                    // 检查 Bundle 是否需要重建
+                    foreach (var asset in assets)
+                    {
+                        if (BuildCacheManager.Cache.RequiresFullBuild ||
+                            !BuildCacheManager.Cache.AssetHashes.TryGetValue(asset.AssetPath, out var cached))
+                        {
+                            changedBundles.Add(bundleName);
+                            break;
+                        }
+
+                        // 快速检测
+                        var fullPath = System.IO.Path.Combine(Application.dataPath.Replace("Assets", ""), asset.AssetPath);
+                        if (cached.IsQuickDirty(fullPath))
+                        {
+                            changedBundles.Add(bundleName);
+                            break;
+                        }
+                    }
+                }
+
+                // 依赖传播：检查依赖链
+                var affectedByDependency = new HashSet<string>();
+                foreach (var bundleName in changedBundles)
+                {
+                    FindDependentBundles(bundleName, affectedByDependency, bundlesByGroup.Keys.ToList());
+                }
+                foreach (var bundle in affectedByDependency)
+                {
+                    changedBundles.Add(bundle);
+                }
+
+                // 统计
+                int totalBundles = bundlesByGroup.Count;
+                int changedCount = changedBundles.Count;
+                int skippedCount = totalBundles - changedCount;
+
+                context.Logs.AppendLine($"  Bundles: {changedCount} changed, {skippedCount} skipped (from {totalBundles} total)");
+
+                // 只构建变化的 Bundle
+                var assetsToBuild = new List<AssetBuildInfo>();
+                foreach (var kvp in bundlesByGroup)
+                {
+                    if (changedBundles.Contains(kvp.Key))
+                    {
+                        assetsToBuild.AddRange(kvp.Value);
+                    }
+                }
+
+                bool success = true;
+                if (assetsToBuild.Count > 0 || changedBundles.Count > 0 || !System.IO.Directory.Exists(OutputPath))
+                {
+                    // 执行构建
+                    success = PipelineLauncher.Build(OutputPath, TargetPlatform, BuildOptions, assetsToBuild.Count > 0 ? assetsToBuild : context.Assets, ManifestName);
+
+                    // 更新缓存
+                    if (success)
+                    {
+                        foreach (var asset in assetsToBuild)
+                        {
+                            BuildCacheManager.UpdateAssetHash(asset.AssetPath, asset.BundleName);
+                        }
+
+                        // 更新 Bundle 缓存
+                        foreach (var kvp in bundlesByGroup)
+                        {
+                            var bundlePath = System.IO.Path.Combine(OutputPath, kvp.Key);
+                            var deps = new List<string>(); // TODO: 从 manifest 获取依赖
+                            BuildCacheManager.UpdateBundleCache(kvp.Key, kvp.Value.Select(a => a.AssetPath).ToList(), deps, bundlePath);
+                        }
+
+                        BuildCacheManager.Save();
+                    }
+                }
+                else
+                {
+                    context.Logs.AppendLine("  All bundles up-to-date, skipping build.");
+                }
+
                 watch.Stop();
                 long totalSize = 0;
                 if (success && System.IO.Directory.Exists(OutputPath))
@@ -209,6 +310,13 @@ namespace YY.Build.Graph.Nodes
                             totalSize += new System.IO.FileInfo(f).Length;
                     }
                 }
+
+                // 更新统计
+                BuildCacheManager.Cache.Stats.TotalBundles = totalBundles;
+                BuildCacheManager.Cache.Stats.RebuiltBundles = changedCount;
+                BuildCacheManager.Cache.Stats.SkippedBundles = skippedCount;
+                BuildCacheManager.Cache.Stats.BuildTimeMs = watch.ElapsedMilliseconds;
+
                 context.Reports.Add(new BuildReportItem
                 {
                     NodeTitle = title,
@@ -218,10 +326,14 @@ namespace YY.Build.Graph.Nodes
                     OutputSizeBytes = totalSize,
                     DurationSeconds = watch.Elapsed.TotalSeconds,
                     IsSuccess = success,
-                    Message = success ? "OK" : "PipelineLauncher Failed"
+                    Message = success ? $"OK ({changedCount} rebuilt, {skippedCount} skipped)" : "PipelineLauncher Failed"
                 });
 
-                if (success) context.Logs.AppendLine($"  Build Success! Size: {EditorUtility.FormatBytes(totalSize)}");
+                if (success)
+                {
+                    context.Logs.AppendLine($"  Build Success! Size: {EditorUtility.FormatBytes(totalSize)}");
+                    context.Logs.AppendLine(BuildCacheManager.GetBuildStats());
+                }
                 else context.Logs.AppendLine("  Build Failed!");
             }
             else
@@ -231,6 +343,24 @@ namespace YY.Build.Graph.Nodes
 
             // 透传数据
             return new Dictionary<string, BuildContext> { { "Pass", context } };
+        }
+
+        /// <summary>
+        /// 查找依赖于指定Bundle的所有Bundle
+        /// </summary>
+        private void FindDependentBundles(string bundleName, HashSet<string> result, List<string> allBundleNames)
+        {
+            // 从缓存中查找依赖关系
+            if (BuildCacheManager.Cache.BundleCaches.TryGetValue(bundleName, out var info))
+            {
+                foreach (var dep in info.Dependencies)
+                {
+                    if (result.Add(dep))
+                    {
+                        FindDependentBundles(dep, result, allBundleNames);
+                    }
+                }
+            }
         }
     }
 }
